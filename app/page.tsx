@@ -1,65 +1,453 @@
-import Image from "next/image";
+'use client'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import SidebarLayout from '../components/SidebarLayout'
+import { ChevronLeft, ChevronRight, CalendarDays, User, PlusCircle, Bookmark, Calendar, CheckCircle2, AlertTriangle, Trash2, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
-export default function Home() {
+export default function CalendarPage() {
+  const [currentDate, setCurrentDate] = useState(new Date())
+  const [solicitudes, setSolicitudes] = useState<any[]>([])
+  const [listaColaboradores, setListaColaboradores] = useState<any[]>([])
+  const [formData, setFormData] = useState({ nombre: '', inicio: '', fin: '', tipo: 'vacaciones', desc: '' })
+  
+  // Estado para el mensaje de éxito animado
+  const [mensajeExito, setMensajeExito] = useState<string | null>(null)
+
+  // Control del modal de confirmación personalizado
+  const [modalConfirmar, setModalConfirmar] = useState<{
+    isOpen: boolean;
+    tipoAccion: 'guardar' | 'eliminar' | null;
+    titulo: string;
+    mensaje: string;
+    datosTemporales?: any;
+  }>({
+    isOpen: false,
+    tipoAccion: null,
+    titulo: '',
+    mensaje: ''
+  })
+
+  const tituloMes = currentDate.toLocaleDateString('es-ES', { 
+    month: 'long', year: 'numeric' 
+  })
+
+  const generarColor = (nombre: string) => {
+    if (!nombre) return '#6366f1';
+    let hash = 0;
+    for (let i = 0; i < nombre.length; i++) {
+      hash = nombre.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return '#' + '00000'.substring(0, 6 - c.length) + c;
+  }
+
+  useEffect(() => { 
+    fetchSolicitudes()
+    fetchColaboradores() 
+  }, [])
+
+  async function fetchSolicitudes() {
+    const { data } = await supabase.from('solicitudes').select('*')
+    if (data) setSolicitudes(data)
+  }
+
+  async function fetchColaboradores() {
+    const { data } = await supabase.from('colaboradores').select('nombre')
+    if (data) setListaColaboradores(data)
+  }
+
+  const handlePreEliminar = (id: number, nombreAsignado: string) => {
+    setModalConfirmar({
+      isOpen: true,
+      tipoAccion: 'eliminar',
+      titulo: 'Eliminar Asignación',
+      mensaje: `¿Estás seguro de que deseas eliminar permanentemente la asignación de "${nombreAsignado}"?`,
+      datosTemporales: { id }
+    })
+  }
+
+  const ejecutarEliminar = async (id: number) => {
+    const { error } = await supabase.from('solicitudes').delete().eq('id', id)
+    if (!error) {
+      cerrarModal()
+      mostrarAlertaExito("Asignación eliminada correctamente")
+      fetchSolicitudes()
+    }
+  }
+
+  const handlePreGuardar = () => {
+    if (!formData.inicio || !formData.fin) return
+    
+    if (new Date(formData.fin) < new Date(formData.inicio)) {
+      alert("La fecha final no puede ser anterior a la fecha de inicio.");
+      return;
+    }
+
+    const sujeto = formData.nombre || formData.desc || "Evento"
+    setModalConfirmar({
+      isOpen: true,
+      tipoAccion: 'guardar',
+      titulo: 'Confirmar Registro',
+      mensaje: `¿Confirmas la asignación de ${formData.tipo} para "${sujeto}"?`
+    })
+  }
+
+  const ejecutarGuardar = async () => {
+    const { error } = await supabase.from('solicitudes').insert([{
+      nombre_colaborador: formData.nombre || null,
+      inicio: formData.inicio,
+      final: formData.fin,
+      tipo: formData.tipo,
+      descripcion: formData.desc
+    }])
+    
+    if (!error) {
+      setFormData({ nombre: '', inicio: '', fin: '', tipo: 'vacaciones', desc: '' })
+      cerrarModal()
+      mostrarAlertaExito("¡Asignado completamente con éxito!")
+      fetchSolicitudes()
+    }
+  }
+
+  const cerrarModal = () => {
+    setModalConfirmar(prev => ({ ...prev, isOpen: false }))
+  }
+
+  const mostrarAlertaExito = (mensaje: string) => {
+    setMensajeExito(mensaje)
+    setTimeout(() => {
+      setMensajeExito(null)
+    }, 3000)
+  }
+
+  const diasEnMes = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
+  const primerDia = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay()
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <SidebarLayout activeTab="calendario">
+      <div className="w-full space-y-6 relative">
+        
+        {/* ========================================================= */}
+        {/* DIÁLOGO/MODAL DE CONFIRMACIÓN PERSONALIZADO               */}
+        {/* ========================================================= */}
+        <AnimatePresence>
+          {modalConfirmar.isOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={cerrarModal}
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              />
+              
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 24 }}
+                className="bg-white border border-slate-200 shadow-2xl rounded-2xl w-full max-w-sm p-5 relative z-10 space-y-4"
+              >
+                <button 
+                  onClick={cerrarModal}
+                  className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors"
+                >
+                  <X size={16} />
+                </button>
+
+                <div className="flex items-start gap-3">
+                  <div className={`p-2.5 rounded-xl shrink-0 ${
+                    modalConfirmar.tipoAccion === 'eliminar' ? 'bg-rose-50 text-rose-600' : 'bg-indigo-50 text-indigo-600'
+                  }`}>
+                    {modalConfirmar.tipoAccion === 'eliminar' ? <Trash2 size={18} /> : <AlertTriangle size={18} />}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-800 tracking-tight">{modalConfirmar.titulo}</h3>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{modalConfirmar.mensaje}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-1.5 justify-end">
+                  <button
+                    onClick={cerrarModal}
+                    className="px-3.5 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 border border-slate-200 rounded-xl transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (modalConfirmar.tipoAccion === 'guardar') ejecutarGuardar()
+                      if (modalConfirmar.tipoAccion === 'eliminar') ejecutarEliminar(modalConfirmar.datosTemporales?.id)
+                    }}
+                    className={`px-4 py-2 text-xs font-bold text-white rounded-xl shadow-sm transition-all ${
+                      modalConfirmar.tipoAccion === 'eliminar' 
+                        ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-100' 
+                        : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'
+                    }`}
+                  >
+                    Confirmar
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* NOTIFICACIÓN ANIMADA FLOTANTE DE ÉXITO */}
+        <AnimatePresence>
+          {mensajeExito && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-slate-900/5 backdrop-blur-[0.5px]"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 20 }}
+                className="bg-slate-900 border border-slate-800 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto z-10"
+              >
+                <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                <span className="text-xs font-bold tracking-wide pr-1 whitespace-nowrap">{mensajeExito}</span>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+        
+        {/* PANEL DE ASIGNACIÓN */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3.5 items-end">
+          <div className="relative flex flex-col gap-1 w-full">
+            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Colaborador</span>
+            <div className="relative flex items-center">
+              <User size={16} className="absolute left-3 text-slate-400 pointer-events-none" />
+              <select 
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white transition-all appearance-none cursor-pointer" 
+                value={formData.nombre} 
+                onChange={e => setFormData({...formData, nombre: e.target.value})}
+              >
+                <option value="">Seleccionar</option>
+                {listaColaboradores.map((c) => <option key={c.nombre} value={c.nombre}>{c.nombre}</option>)}
+              </select>
+            </div>
+          </div>
+          
+          <div className="relative flex flex-col gap-1 w-full">
+            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Detalle</span>
+            <div className="relative flex items-center">
+              <Bookmark size={16} className="absolute left-3 text-slate-400 pointer-events-none" />
+              <input 
+                type="text" 
+                placeholder="Evento especial" 
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white transition-all" 
+                value={formData.desc}
+                onChange={e => setFormData({...formData, desc: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="relative flex flex-col gap-1 w-full">
+            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Categoría</span>
+            <div className="relative flex items-center">
+              <CalendarDays size={16} className="absolute left-3 text-slate-400 pointer-events-none" />
+              <select 
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white transition-all appearance-none cursor-pointer" 
+                value={formData.tipo} 
+                onChange={e => setFormData({...formData, tipo: e.target.value})}
+              >
+                <option value="vacaciones">Vacaciones</option>
+                <option value="permiso">Permiso</option>
+                <option value="especial">Evento Especial</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-1 w-full">
+            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Fecha de inicio</span>
+            <input 
+              type="date" 
+              className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer" 
+              value={formData.inicio} 
+              onChange={e => setFormData({...formData, inicio: e.target.value})} 
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <div className="flex flex-col gap-1 w-full">
+            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Fecha de final</span>
+            <input 
+              type="date" 
+              className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer" 
+              value={formData.fin} 
+              onChange={e => setFormData({...formData, fin: e.target.value})} 
+            />
+          </div>
+          
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handlePreGuardar} 
+            className="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-indigo-200 hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 h-[41px]"
           >
-            Documentation
-          </a>
+            <PlusCircle size={15} />
+            Asignar
+          </motion.button>
         </div>
-      </main>
-    </div>
-  );
+
+        {/* CABECERA DEL MES Y NAVEGACIÓN */}
+        <div className="flex justify-between items-center bg-white/40 backdrop-blur-sm p-2 rounded-2xl border border-slate-200/40">
+          <h2 className="text-lg font-extrabold capitalize text-slate-800 tracking-tight flex items-center gap-2 px-3">
+            <Calendar size={18} className="text-indigo-500" />
+            {tituloMes}
+          </h2>
+          <div className="flex bg-slate-200/60 p-1 rounded-xl items-center gap-0.5">
+            <button 
+              onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} 
+              className="p-1.5 hover:bg-white text-slate-600 hover:text-slate-900 rounded-lg transition-all active:scale-95 shadow-none hover:shadow-sm"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button 
+              onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} 
+              className="p-1.5 hover:bg-white text-slate-600 hover:text-slate-900 rounded-lg transition-all active:scale-95 shadow-none hover:shadow-sm"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* CALENDARIO DE MATRIZ MODERNO */}
+        <div className="bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm">
+          <div className="grid grid-cols-7 gap-2 mb-2">
+            {['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'].map(d => (
+              <div key={d} className="text-center text-[10px] font-extrabold text-slate-400 tracking-wider py-1 select-none">
+                {d}
+              </div>
+            ))}
+          </div>
+          
+          <div className="grid grid-cols-7 gap-2.5">
+            {Array.from({ length: primerDia }).map((_, i) => (
+              <div key={`empty-${i}`} className="h-24 bg-slate-50/40 rounded-2xl border border-slate-100/50" />
+            ))}
+            
+            {Array.from({ length: diasEnMes }).map((_, i) => {
+              const dia = i + 1
+              const fechaCelda = new Date(currentDate.getFullYear(), currentDate.getMonth(), dia)
+              
+              // DETECTAR FIN DE SEMANA: Domingo = 0, Sábado = 6
+              const diaSemana = fechaCelda.getDay()
+              const esFinDeSemana = diaSemana === 0 || diaSemana === 6
+
+              const sol = solicitudes.find(s => {
+                const inicio = new Date(s.inicio); inicio.setMinutes(inicio.getMinutes() + inicio.getTimezoneOffset());
+                const fin = new Date(s.final); fin.setMinutes(fin.getMinutes() + fin.getTimezoneOffset());
+                const start = inicio < fin ? inicio : fin;
+                const end = inicio < fin ? fin : inicio;
+                return fechaCelda >= start && fechaCelda <= end
+              })
+
+              // SEPARAR TEXTOS: Nombre arriba, Tipo/Detalle abajo
+              const nombreColaborador = sol ? sol.nombre_colaborador : '';
+              const tipoAusencia = sol 
+                ? (sol.tipo === 'especial' ? sol.descripcion : sol.tipo.charAt(0).toUpperCase() + sol.tipo.slice(1))
+                : '';
+
+              const esHoy = new Date().getDate() === dia && new Date().getMonth() === currentDate.getMonth() && new Date().getFullYear() === currentDate.getFullYear();
+
+              const obtenerBadgeTipo = (tipo: string) => {
+                switch (tipo) {
+                  case 'vacaciones': return { label: ' Vacaciones', color: '#10b981' };
+                  case 'permiso': return { label: ' Permiso', color: '#3b82f6' };
+                  case 'ausencia': return { label: ' Ausencia', color: '#ef4444' };
+                  default: return { label: ' Evento Especial', color: '#f59e0b' };
+                }
+              };
+
+              return (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.15, delay: Math.min(i * 0.015, 0.3) }}
+                  className={`h-24 p-2 rounded-2xl border flex flex-col justify-between relative group transform transition-all duration-200 ${
+                    esHoy 
+                      ? 'border-indigo-500 bg-indigo-50/10 shadow-sm shadow-indigo-100' 
+                      : esFinDeSemana
+                        ? 'border-slate-200 bg-slate-100/70 shadow-inner' 
+                        : 'border-slate-100 bg-white hover:border-slate-300/80 hover:-translate-y-0.5 hover:shadow-md'
+                  }`}
+                >
+                  <span className={`text-xs font-bold select-none ${
+                    esHoy 
+                      ? 'text-indigo-600 bg-indigo-100/80 px-1.5 py-0.5 rounded-md w-fit' 
+                      : esFinDeSemana 
+                        ? 'text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded-md w-fit text-[11px]' 
+                        : 'text-slate-400'
+                  }`}>
+                    {dia}
+                  </span>
+
+                  {sol && (
+                    <div className="relative w-full mt-auto">
+                      {/* TARJETA EN DOS LÍNEAS LIMPIA Y COMPACTA */}
+                      <div 
+                        className="text-white px-2.5 py-1.5 rounded-xl cursor-pointer transition-all hover:brightness-105 flex flex-col gap-0.5 shadow-sm pr-7 relative group/badge overflow-hidden" 
+                        style={{ backgroundColor: sol.tipo === 'especial' ? '#f59e0b' : generarColor(sol.nombre_colaborador) }}
+                      >
+                        <span className="text-[11px] font-bold truncate tracking-wide leading-tight">
+                          {nombreColaborador || sol.descripcion}
+                        </span>
+                        
+                        <span className="text-[9px] font-medium opacity-85 truncate leading-tight">
+                          {tipoAusencia}
+                        </span>
+                        
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handlePreEliminar(sol.id, nombreColaborador || sol.descripcion); }} 
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-black/10 hover:bg-black/30 text-white rounded-md w-4 h-4 flex items-center justify-center text-[8px] font-black transition-colors z-10"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      {/* TOOLTIP FLOTANTE PREMIUM ASÍNCRONO */}
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2.5 w-52 p-3.5 bg-slate-950/95 text-white text-xs rounded-2xl shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-150 pointer-events-none z-50 border border-slate-800 backdrop-blur-md scale-95 group-hover:scale-100 transform origin-bottom flex flex-col gap-1.5">
+                        <div className="font-extrabold text-sm tracking-tight border-b border-slate-800 pb-1.5 text-slate-100 truncate">
+                          {nombreColaborador || sol.descripcion}
+                        </div>
+                        
+                        <div className="text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
+                          <span 
+                            className="w-2 h-2 rounded-full inline-block shrink-0" 
+                            style={{ backgroundColor: obtenerBadgeTipo(sol.tipo).color }}
+                          />
+                          {obtenerBadgeTipo(sol.tipo).label}
+                        </div>
+
+                        {sol.descripcion && sol.tipo !== 'especial' && (
+                          <div className="text-[10px] text-slate-400 bg-slate-900 px-2 py-1 rounded-lg italic truncate">
+                            "{sol.descripcion}"
+                          </div>
+                        )}
+
+                        <div className="mt-1 text-[10px] font-mono text-slate-400 flex justify-between items-center bg-slate-900/60 px-2 py-1 rounded-lg">
+                          <span>{sol.inicio.split('T')[0]}</span>
+                          <span className="text-slate-600 text-[9px] lowercase font-sans">al</span>
+                          <span>{sol.final.split('T')[0]}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )
+            })}
+          </div>
+        </div>
+
+      </div>
+    </SidebarLayout>
+  )
 }
