@@ -16,11 +16,26 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
 
   useEffect(() => {
     async function obtenerUsuario() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setUsuarioEmail(user.email || 'Usuario')
+      try {
+        // Control de tiempo por si Supabase no responde en entornos de desarrollo/despliegue
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 3000)
+        )
+
+        const userPromise = supabase.auth.getUser()
+        
+        // Ejecuta la consulta con un límite de 3 segundos
+        const { data: { user } }: any = await Promise.race([userPromise, timeoutPromise])
+        
+        if (user) {
+          setUsuarioEmail(user.email || 'Usuario')
+        }
+      } catch (error) {
+        console.warn('No se pudo conectar con el servicio de autenticación:', error)
+        setUsuarioEmail('Modo Local / Desconectado')
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     obtenerUsuario()
   }, [])
