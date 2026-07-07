@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation' // Enrutador oficial para redirección fluida
 import { Calendar, Users, List, LogOut, User } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logoutAction } from '@/app/login/actions'
@@ -13,18 +14,16 @@ interface SidebarLayoutProps {
 export default function SidebarLayout({ children, activeTab }: SidebarLayoutProps) {
   const [usuarioEmail, setUsuarioEmail] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter() // Inicializamos el enrutador de Next.js
 
   useEffect(() => {
     async function obtenerUsuario() {
       try {
-        // Control de tiempo por si Supabase no responde en entornos de desarrollo/despliegue
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Timeout')), 3000)
         )
 
         const userPromise = supabase.auth.getUser()
-        
-        // Ejecuta la consulta con un límite de 3 segundos
         const { data: { user } }: any = await Promise.race([userPromise, timeoutPromise])
         
         if (user) {
@@ -39,6 +38,20 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
     }
     obtenerUsuario()
   }, [])
+
+  // Función manejadora del cierre de sesión fluido
+  const handleLogout = async () => {
+    try {
+      await logoutAction() // Ejecuta tu acción de servidor (borra cookies)
+      await supabase.auth.signOut() // Asegura que el cliente local limpie todo rastro
+      router.push('/login') // Redirección limpia e inmediata sin recargar toda la página
+      router.refresh() // Limpia los cachés de las páginas protegidas
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+      // Si falla por alguna razón del service worker, un fallback seguro:
+      window.location.href = '/login'
+    }
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
@@ -100,17 +113,27 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
               <User size={16} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-700 truncate">
-                {loading ? 'Conectando...' : (usuarioEmail?.split('@')[0] || 'Conectado')}
-              </p>
-              <p className="text-[10px] text-slate-400 font-medium truncate">
-                {loading ? 'Sincronizando...' : (usuarioEmail || 'Sesión activa')}
-              </p>
+              {loading ? (
+                // Efecto de carga elegante (Skeleton) mientras conecta
+                <div className="space-y-1.5 animate-pulse py-0.5">
+                  <div className="h-2.5 bg-slate-200 rounded w-2/3"></div>
+                  <div className="h-2 bg-slate-200 rounded w-5/6"></div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs font-bold text-slate-700 truncate">
+                    {usuarioEmail?.split('@')[0] || 'Conectado'}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-medium truncate">
+                    {usuarioEmail || 'Sesión activa'}
+                  </p>
+                </>
+              )}
             </div>
           </div>
 
           <button 
-            onClick={() => logoutAction()}
+            onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2 text-xs font-bold text-slate-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-colors group"
           >
             <LogOut size={16} className="text-slate-400 group-hover:text-rose-500 transition-colors" />
@@ -119,7 +142,7 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
         </div>
       </aside>
 
-      {/* CONTENIDO PRINCIPAL CON FONDO GRIS CLARO ASEGURADO EN TODO EL ANCHO */}
+      {/* CONTENIDO PRINCIPAL */}
       <div className="flex-1 bg-slate-50 min-h-screen overflow-y-auto">
         <main className="p-8 max-w-7xl mx-auto w-full">
           {children}
