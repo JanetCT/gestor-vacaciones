@@ -1,10 +1,13 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  // Desactivamos experimentalmente cualquier uso de turbopack
-  experimental: {
-    // Esto asegura que Next.js no intente usar turbopack internamente
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://tu-servidor-o-backend.com/api/:path*', // Reemplaza con tu URL si aplicaba un proxy de API
+      },
+    ];
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
