@@ -41,7 +41,7 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
   }, [])
 
   return (
-    <div className="flex min-h-screen bg-slate-50/50 text-slate-900 font-sans antialiased">
+    <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
       {/* MENÚ LATERAL */}
       <aside className="w-64 bg-white border-r border-slate-200/80 flex flex-col justify-between p-4 shrink-0">
         <div className="space-y-6">
@@ -119,10 +119,12 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
         </div>
       </aside>
 
-      {/* CONTENIDO PRINCIPAL DE LA PÁGINA */}
-      <main className="flex-1 p-8 overflow-y-auto max-w-7xl mx-auto w-full">
-        {children}
-      </main>
+      {/* CONTENIDO PRINCIPAL CON FONDO GRIS CLARO ASEGURADO EN TODO EL ANCHO */}
+      <div className="flex-1 bg-slate-50 min-h-screen overflow-y-auto">
+        <main className="p-8 max-w-7xl mx-auto w-full">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }
