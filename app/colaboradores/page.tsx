@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import SidebarLayout from '../../components/SidebarLayout'
-import { Trash2, UserPlus, User, Briefcase, Globe, CheckCircle2, AlertTriangle, X } from 'lucide-react'
+import { Trash2, UserPlus, User, Briefcase, Globe, CheckCircle2, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ColaboradoresPage() {
@@ -59,7 +59,6 @@ export default function ColaboradoresPage() {
     }
   }
 
-  // Intercepta la eliminación para abrir el modal personalizado
   const handlePreEliminar = (id: number, nombreColab: string) => {
     setModalConfirmar({
       isOpen: true,
@@ -69,7 +68,6 @@ export default function ColaboradoresPage() {
     })
   }
 
-  // Ejecuta la eliminación real tras confirmar en el modal
   const ejecutarEliminar = async () => {
     if (modalConfirmar.idEliminar === null) return
 
@@ -93,10 +91,9 @@ export default function ColaboradoresPage() {
     setMensajeExito(mensaje)
     setTimeout(() => {
       setMensajeExito(null)
-    }, 3000) // Se oculta automáticamente tras 3 segundos
+    }, 3000)
   }
 
-  // Función auxiliar para obtener las iniciales del nombre
   const obtenerIniciales = (name: string) => {
     const nombres = name.split(' ')
     if (nombres.length >= 2) {
@@ -107,7 +104,13 @@ export default function ColaboradoresPage() {
 
   return (
     <SidebarLayout activeTab="colaboradores">
-      <div className="w-full space-y-6 p-2 relative">
+      {/* ✨ CONTENEDOR ANIMADO PRINCIPAL DE LA PÁGINA */}
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeInOut' }}
+        className="w-full space-y-6 p-2 relative"
+      >
         
         {/* ========================================================= */}
         {/* DIÁLOGO/MODAL DE CONFIRMACIÓN PERSONALIZADO (AL MEDIO)   */}
@@ -115,7 +118,6 @@ export default function ColaboradoresPage() {
         <AnimatePresence>
           {modalConfirmar.isOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              {/* Fondo desenfocado translúcido */}
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -124,7 +126,6 @@ export default function ColaboradoresPage() {
                 className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
               />
               
-              {/* Caja del Modal */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.92, y: 15 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -132,7 +133,6 @@ export default function ColaboradoresPage() {
                 transition={{ type: 'spring', stiffness: 380, damping: 24 }}
                 className="bg-white border border-slate-200 shadow-2xl rounded-2xl w-full max-w-sm p-5 relative z-10 space-y-4"
               >
-                {/* Botón Cerrar Esquina */}
                 <button 
                   onClick={cerrarModal}
                   className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors"
@@ -140,7 +140,6 @@ export default function ColaboradoresPage() {
                   <X size={16} />
                 </button>
 
-                {/* Encabezado */}
                 <div className="flex items-start gap-3">
                   <div className="p-2.5 rounded-xl shrink-0 bg-rose-50 text-rose-600">
                     <Trash2 size={18} />
@@ -151,7 +150,6 @@ export default function ColaboradoresPage() {
                   </div>
                 </div>
 
-                {/* Botones de Acción */}
                 <div className="flex gap-2 pt-1.5 justify-end">
                   <button
                     onClick={cerrarModal}
@@ -200,13 +198,10 @@ export default function ColaboradoresPage() {
         {/* ENCABEZADO DE LA PÁGINA */}
         <div className="flex flex-col gap-1 py-1">
           <h1 className="text-xl font-bold text-slate-800 tracking-tight">Colaboradores</h1>
-          <p className="text-xs text-slate-400"></p>
         </div>
         
         {/* FORMULARIO ESTILO TOP-PANEL */}
         <div className="bg-white p-4 rounded-xl border border-slate-200/60 shadow-sm grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-center">
-          
-          {/* Input Nombre */}
           <div className="relative flex items-center lg:col-span-2">
             <User size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
             <input 
@@ -217,7 +212,6 @@ export default function ColaboradoresPage() {
             />
           </div>
 
-          {/* Selector Rol */}
           <div className="relative flex items-center">
             <Briefcase size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
             <select 
@@ -229,7 +223,6 @@ export default function ColaboradoresPage() {
             </select>
           </div>
 
-          {/* Selector País */}
           <div className="relative flex items-center">
             <Globe size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
             <select 
@@ -242,7 +235,6 @@ export default function ColaboradoresPage() {
             </select>
           </div>
 
-          {/* Botón Agregar */}
           <button 
             onClick={handleAgregar} 
             className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2 shadow-sm"
@@ -252,15 +244,17 @@ export default function ColaboradoresPage() {
           </button>
         </div>
 
-        {/* LISTA DE COLABORADORES */}
+        {/* LISTA DE COLABORADORES CON ANIMACIÓN POR TARJETA */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {colaboradores.map((colab) => (
-            <div 
-              key={colab.id} 
+          {colaboradores.map((colab, index) => (
+            <motion.div 
+              key={colab.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3), ease: 'easeOut' }}
               className="bg-white p-4 rounded-xl border border-slate-200/60 shadow-sm flex items-center justify-between hover:border-slate-300 hover:shadow-md transition-all group"
             >
               <div className="flex items-center gap-3 min-w-0">
-                {/* Avatar circular */}
                 <div 
                   className="w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-black text-white shrink-0 shadow-sm"
                   style={{ backgroundColor: colab.color }}
@@ -281,7 +275,6 @@ export default function ColaboradoresPage() {
                 </div>
               </div>
 
-              {/* Botón Eliminar con modal personalizado */}
               <button 
                 onClick={() => handlePreEliminar(colab.id, colab.nombre)} 
                 className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-60 group-hover:opacity-100"
@@ -289,18 +282,17 @@ export default function ColaboradoresPage() {
               >
                 <Trash2 size={15} />
               </button>
-            </div>
+            </motion.div>
           ))}
         </div>
 
-        {/* Mensaje si no hay colaboradores */}
         {colaboradores.length === 0 && (
           <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-200">
             <p className="text-xs text-slate-400 font-medium">No hay colaboradores registrados todavía.</p>
           </div>
         )}
 
-      </div>
+      </motion.div>
     </SidebarLayout>
   )
 }
