@@ -1,22 +1,39 @@
 'use client'
-import { useState } from 'react'
-import { loginAction } from './actions' // <-- Importamos la Server Action
+import { useState, useEffect } from 'react'
+import { loginAction } from './actions' // <-- Importamos tu Server Action
 import { CheckCircle2, AlertCircle, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false) // Nuevo estado para ver contraseña
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false) // Estado para recordar correo
   const [loading, setLoading] = useState(false)
   const [mensajeExito, setMensajeExito] = useState(null)
   const [mensajeError, setMensajeError] = useState(null)
+
+  // Cargar el correo guardado al montar el componente
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('remembered_email')
+    if (savedEmail) {
+      setEmail(savedEmail)
+      setRememberMe(true)
+    }
+  }, [])
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
     setMensajeError(null) 
     
+    // Si "Recordar" está marcado, guardamos el correo; si no, lo eliminamos
+    if (rememberMe) {
+      localStorage.setItem('remembered_email', email)
+    } else {
+      localStorage.removeItem('remembered_email')
+    }
+
     // Ejecutamos el login de forma segura en el servidor
     const resultado = await loginAction(email, password)
     
@@ -64,7 +81,7 @@ export default function LoginPage() {
         )}
       </AnimatePresence>
 
-      {/* TARJETA DE LOGIN CON ANIMACIÓN DE ENTRADA SUAVE */}
+      {/* TARJETA DE LOGIN */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -88,6 +105,7 @@ export default function LoginPage() {
               <input 
                 type="email" 
                 required 
+                value={email} // Vinculamos el valor al estado
                 placeholder="ejemplo@empresa.com" 
                 onChange={(e) => setEmail(e.target.value)} 
                 className="w-full pl-10 pr-3.5 py-2.5 border border-slate-200 rounded-xl font-semibold text-xs text-slate-700 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white transition-all bg-slate-50 focus:ring-2 focus:ring-indigo-100" 
@@ -107,7 +125,6 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)} 
                 className="w-full pl-10 pr-11 py-2.5 border border-slate-200 rounded-xl font-semibold text-xs text-slate-700 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white transition-all bg-slate-50 focus:ring-2 focus:ring-indigo-100" 
               />
-              {/* Botón Ojo para mostrar/ocultar */}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -118,12 +135,28 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* CASILLA RECORDAR CORREO */}
+          <div className="flex items-center justify-between pt-1">
+            <label className="flex items-center gap-2 cursor-pointer group select-none">
+              <input 
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded-md border-slate-200 text-indigo-600 focus:ring-indigo-500/30 accent-indigo-600 cursor-pointer"
+              />
+              <span className="text-[11px] font-bold text-slate-400 group-hover:text-slate-600 transition-colors tracking-wide">
+                Recordar mi correo
+              </span>
+            </label>
+          </div>
+
+          {/* BOTÓN DE ENVÍO */}
           <motion.button 
             whileHover={{ scale: 1.01 }} 
             whileTap={{ scale: 0.99 }} 
             type="submit" 
             disabled={loading} 
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-3 px-4 rounded-xl transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed mt-5 shadow-sm shadow-indigo-600/10 flex items-center justify-center tracking-wide"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-3 px-4 rounded-xl transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed mt-4 shadow-sm shadow-indigo-600/10 flex items-center justify-center tracking-wide"
           >
             {loading ? 'Verificando datos...' : 'Ingresar'}
           </motion.button>
