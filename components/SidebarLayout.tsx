@@ -2,9 +2,10 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Calendar, Users, List, LogOut, User, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Calendar, Users, List, LogOut, User, AlertCircle, ChevronLeft, ChevronRight, Code, ShieldCheck } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logoutAction } from '@/app/login/actions'
+import UserStatusCard from '@/components/UserStatusCard'
 
 interface SidebarLayoutProps {
   children: React.ReactNode
@@ -13,17 +14,20 @@ interface SidebarLayoutProps {
 
 export default function SidebarLayout({ children, activeTab }: SidebarLayoutProps) {
   const [usuarioEmail, setUsuarioEmail] = useState<string | null>(null)
+  // 🆕 NUEVOS ESTADOS: Para guardar el nombre y rol reales desde la base de datos
+  const [usuarioNombre, setUsuarioNombre] = useState<string | null>(null)
+  const [usuarioRol, setUsuarioRol] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [mostrarMensajeInactividad, setMostrarMensajeInactividad] = useState(false)
   
-  // 🧭 NUEVO ESTADO: Controla si la barra está colapsada o expandida
+  // 🧭 CONTROL DE LA BARRA: Colapsada o expandida
   const [isCollapsed, setIsCollapsed] = useState(false)
   
   const router = useRouter()
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const TIEMPO_INACTIVIDAD = 20 * 60 * 1000 
 
-  // Cargar estado de la barra lateral desde localStorage para mantener la elección del usuario
+  // Cargar estado de la barra lateral desde localStorage
   useEffect(() => {
     const savedState = localStorage.getItem('sidebar_collapsed')
     if (savedState) {
@@ -31,16 +35,15 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
     }
   }, [])
 
-  // Guardar estado en localStorage cuando cambie
   const toggleSidebar = () => {
     const newState = !isCollapsed
     setIsCollapsed(newState)
     localStorage.setItem('sidebar_collapsed', String(newState))
   }
 
-  // 1. OBTENER INFORMACIÓN DEL USUARIO
+  // 1. OBTENER INFORMACIÓN DEL USUARIO Y SU ROL DE LA BD
   useEffect(() => {
-    async function obtenerUsuario() {
+    async function obtenerUsuarioYPerfil() {
       try {
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Timeout')), 3000)
@@ -50,6 +53,18 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
         
         if (user) {
           setUsuarioEmail(user.email || 'Usuario')
+          
+          // 🆕 CONSULTA A LA TABLA PERFILES: Buscamos por el ID del usuario autenticado
+          const { data: perfil, error } = await supabase
+            .from('perfiles')
+            .select('nombre, rol')
+            .eq('id', user.id)
+            .single()
+
+          if (perfil && !error) {
+            setUsuarioNombre(perfil.nombre)
+            setUsuarioRol(perfil.rol)
+          }
         }
       } catch (error) {
         console.warn('No se pudo conectar con el servicio de autenticación:', error)
@@ -58,7 +73,7 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
         setLoading(false)
       }
     }
-    obtenerUsuario()
+    obtenerUsuarioYPerfil()
   }, [])
 
   // 2. CONTROL DE INACTIVIDAD
@@ -104,6 +119,13 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
     router.refresh()
   }
 
+  // Iconos pequeños para cuando el menú esté colapsado
+  const renderMiniRolIcon = () => {
+    if (usuarioRol === 'Desarrollador') return <Code size={10} className="text-indigo-500" />
+    if (usuarioRol === 'Administrador') return <ShieldCheck size={10} className="text-emerald-500" />
+    return <User size={10} className="text-slate-500" />
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans antialiased relative">
       
@@ -127,7 +149,7 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
         </div>
       )}
 
-      {/* 🧭 MENÚ LATERAL ANMADO (Se expande a w-64 o se contrae a w-20) */}
+      {/* 🧭 MENÚ LATERAL ANIMADO */}
       <aside 
         className={`bg-white border-r border-slate-200/80 flex flex-col justify-between p-4 shrink-0 relative transition-all duration-300 ease-in-out ${
           isCollapsed ? 'w-20' : 'w-64'
@@ -197,32 +219,39 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
           </nav>
         </div>
 
-        {/* SECCIÓN INFERIOR: USUARIO Y LOGOUT */}
+        {/* SECCIÓN INFERIOR: TARJETA DINÁMICA DE USUARIO Y LOGOUT */}
         <div className="space-y-3 pt-4 border-t border-slate-100">
-          <div className={`flex items-center gap-3 p-2 rounded-xl bg-slate-50 border border-slate-100 ${isCollapsed ? 'justify-center' : ''}`}>
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-              <User size={16} />
-            </div>
-            {!isCollapsed && (
-              <div className="min-w-0 flex-1 transition-opacity duration-200">
-                {loading ? (
-                  <div className="space-y-1.5 animate-pulse py-0.5">
-                    <div className="h-2.5 bg-slate-200 rounded w-2/3"></div>
-                    <div className="h-2 bg-slate-200 rounded w-5/6"></div>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-xs font-bold text-slate-700 truncate">
-                      {usuarioEmail?.split('@')[0] || 'Conectado'}
-                    </p>
-                    <p className="text-[10px] text-slate-400 font-medium truncate">
-                      {usuarioEmail || 'Sesión activa'}
-                    </p>
-                  </>
-                )}
+          {isCollapsed ? (
+            /* Vista colapsada estética */
+            <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-50 border border-slate-100 relative group/avatar">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 relative">
+                <User size={16} />
+                <div className="absolute -bottom-1 -right-1 bg-white border border-slate-100 rounded-full p-0.5 shadow-sm">
+                  {renderMiniRolIcon()}
+                </div>
               </div>
-            )}
-          </div>
+              {/* Tooltip flotante con información al pasar el mouse por el mini-avatar */}
+              <div className="absolute left-20 bg-slate-900 text-white text-[10px] py-1 px-2 rounded shadow-md opacity-0 group-hover/avatar:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-30">
+                {usuarioNombre || usuarioEmail?.split('@')[0]} ({usuarioRol || 'Usuario'})
+              </div>
+            </div>
+          ) : (
+            /* 🆕 Vista expandida: Muestra tu nuevo componente premium */
+            loading ? (
+              <div className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-slate-100 shadow-sm animate-pulse">
+                <div className="w-10 h-10 bg-slate-200 rounded-xl"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-slate-200 rounded w-3/4"></div>
+                  <div className="h-2.5 bg-slate-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            ) : (
+              <UserStatusCard 
+                name={usuarioNombre || usuarioEmail?.split('@')[0] || 'Conectado'} 
+                role={usuarioRol || 'Usuario'} 
+              />
+            )
+          )}
 
           <button 
             onClick={handleLogout}
@@ -237,7 +266,7 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
         </div>
       </aside>
 
-      {/* CONTENIDO PRINCIPAL (Se adapta automáticamente al ancho del Sidebar) */}
+      {/* CONTENIDO PRINCIPAL */}
       <div className="flex-1 bg-slate-50 min-h-screen overflow-y-auto transition-all duration-300 ease-in-out">
         <main className="p-8 max-w-7xl mx-auto w-full">
           {children}
