@@ -1,12 +1,13 @@
 'use client'
 import { useState } from 'react'
 import { loginAction } from './actions' // <-- Importamos la Server Action
-import { CheckCircle2, AlertCircle } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false) // Nuevo estado para ver contraseña
   const [loading, setLoading] = useState(false)
   const [mensajeExito, setMensajeExito] = useState(null)
   const [mensajeError, setMensajeError] = useState(null)
@@ -24,7 +25,6 @@ export default function LoginPage() {
       setLoading(false)
     } else {
       setMensajeExito('¡Inicio de sesión exitoso!')
-      // Redirección limpia: las cookies ya están inyectadas en el navegador
       setTimeout(() => {
         window.location.href = '/'
       }, 800)
@@ -64,7 +64,13 @@ export default function LoginPage() {
         )}
       </AnimatePresence>
 
-      <div className="bg-white p-8 rounded-2xl border border-slate-200/80 shadow-sm w-full max-w-md z-10">
+      {/* TARJETA DE LOGIN CON ANIMACIÓN DE ENTRADA SUAVE */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="bg-white p-8 rounded-2xl border border-slate-200/80 shadow-sm w-full max-w-md z-10"
+      >
         <div className="flex items-center justify-center gap-2 mb-6 select-none">
           <span className="h-6 w-6 rounded-md bg-indigo-600 flex items-center justify-center text-white text-[10px] font-black tracking-wider shrink-0">LT</span>
           <h1 className="text-sm font-bold tracking-widest text-slate-900 uppercase">LETS TRIP<span className="text-indigo-600">.</span></h1>
@@ -73,21 +79,56 @@ export default function LoginPage() {
         <p className="text-[11px] text-slate-400 text-center mb-6 font-medium tracking-wide">Ingresa tus credenciales para acceder</p>
 
         <form onSubmit={handleLogin} className="space-y-4">
+          
+          {/* CAMPO CORREO */}
           <div>
             <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Correo Electrónico</label>
-            <input type="email" required placeholder="ejemplo@empresa.com" onChange={(e) => setEmail(e.target.value)} className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl font-semibold text-xs text-slate-700 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white transition-all bg-slate-50" />
+            <div className="relative flex items-center">
+              <Mail size={16} className="absolute left-3.5 text-slate-400 pointer-events-none" />
+              <input 
+                type="email" 
+                required 
+                placeholder="ejemplo@empresa.com" 
+                onChange={(e) => setEmail(e.target.value)} 
+                className="w-full pl-10 pr-3.5 py-2.5 border border-slate-200 rounded-xl font-semibold text-xs text-slate-700 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white transition-all bg-slate-50 focus:ring-2 focus:ring-indigo-100" 
+              />
+            </div>
           </div>
 
+          {/* CAMPO CONTRASEÑA */}
           <div>
             <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Contraseña</label>
-            <input type="password" required placeholder="••••••••" onChange={(e) => setPassword(e.target.value)} className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl font-semibold text-xs text-slate-700 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white transition-all bg-slate-50" />
+            <div className="relative flex items-center">
+              <Lock size={16} className="absolute left-3.5 text-slate-400 pointer-events-none" />
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                required 
+                placeholder="••••••••" 
+                onChange={(e) => setPassword(e.target.value)} 
+                className="w-full pl-10 pr-11 py-2.5 border border-slate-200 rounded-xl font-semibold text-xs text-slate-700 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white transition-all bg-slate-50 focus:ring-2 focus:ring-indigo-100" 
+              />
+              {/* Botón Ojo para mostrar/ocultar */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
 
-          <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-3 px-4 rounded-xl transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed mt-5 shadow-sm shadow-indigo-600/10 flex items-center justify-center tracking-wide">
+          <motion.button 
+            whileHover={{ scale: 1.01 }} 
+            whileTap={{ scale: 0.99 }} 
+            type="submit" 
+            disabled={loading} 
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-3 px-4 rounded-xl transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed mt-5 shadow-sm shadow-indigo-600/10 flex items-center justify-center tracking-wide"
+          >
             {loading ? 'Verificando datos...' : 'Ingresar'}
           </motion.button>
         </form>
-      </div>
+      </motion.div>
     </div>
   )
 }

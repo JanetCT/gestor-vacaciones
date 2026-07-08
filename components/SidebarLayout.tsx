@@ -149,7 +149,7 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
             </div>
             {!isCollapsed && (
               <span className="font-black text-sm tracking-wider uppercase text-slate-800 transition-opacity duration-200">
-                LETS TRIP.
+                LETS TRIP
               </span>
             )}
           </div>
