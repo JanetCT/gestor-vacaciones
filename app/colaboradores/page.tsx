@@ -94,14 +94,6 @@ export default function ColaboradoresPage() {
     }, 3000)
   }
 
-  const obtenerIniciales = (name: string) => {
-    const nombres = name.split(' ')
-    if (nombres.length >= 2) {
-      return `${nombres[0].charAt(0)}${nombres[1].charAt(0)}`.toUpperCase()
-    }
-    return name.charAt(0).toUpperCase()
-  }
-
   return (
     <SidebarLayout activeTab="colaboradores">
       {/* ✨ CONTENEDOR ANIMADO PRINCIPAL DE LA PÁGINA */}
@@ -109,7 +101,7 @@ export default function ColaboradoresPage() {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeInOut' }}
-        className="w-full space-y-6 p-2 relative"
+        className="w-full space-y-6 p-2 relative text-slate-900 dark:text-slate-100"
       >
         
         {/* ========================================================= */}
@@ -123,7 +115,7 @@ export default function ColaboradoresPage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={cerrarModal}
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm dark:bg-black/60"
               />
               
               <motion.div
@@ -131,35 +123,35 @@ export default function ColaboradoresPage() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
                 transition={{ type: 'spring', stiffness: 380, damping: 24 }}
-                className="bg-white border border-slate-200 shadow-2xl rounded-2xl w-full max-w-sm p-5 relative z-10 space-y-4"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl w-full max-w-sm p-5 relative z-10 space-y-4"
               >
                 <button 
                   onClick={cerrarModal}
-                  className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors"
+                  className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 rounded-lg transition-colors"
                 >
                   <X size={16} />
                 </button>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2.5 rounded-xl shrink-0 bg-rose-50 text-rose-600">
+                  <div className="p-2.5 rounded-xl shrink-0 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400">
                     <Trash2 size={18} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-800 tracking-tight">{modalConfirmar.titulo}</h3>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{modalConfirmar.mensaje}</p>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight">{modalConfirmar.titulo}</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{modalConfirmar.mensaje}</p>
                   </div>
                 </div>
 
                 <div className="flex gap-2 pt-1.5 justify-end">
                   <button
                     onClick={cerrarModal}
-                    className="px-3.5 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 border border-slate-200 rounded-xl transition-all"
+                    className="px-3.5 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl transition-all"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={ejecutarEliminar}
-                    className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm shadow-rose-100 transition-all"
+                    className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm transition-all"
                   >
                     Confirmar
                   </button>
@@ -179,14 +171,14 @@ export default function ColaboradoresPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-slate-900/5 backdrop-blur-[0.5px]"
+                className="absolute inset-0 bg-slate-900/5 backdrop-blur-[0.5px] dark:bg-black/20"
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.8, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: -10 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 20 }}
-                className="bg-slate-900 border border-slate-800 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto z-10"
+                className="bg-slate-900 dark:bg-slate-800 border border-slate-800 dark:border-slate-700 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto z-10"
               >
                 <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
                 <span className="text-xs font-bold tracking-wide pr-1 whitespace-nowrap">{mensajeExito}</span>
@@ -197,47 +189,52 @@ export default function ColaboradoresPage() {
         
         {/* ENCABEZADO DE LA PÁGINA */}
         <div className="flex flex-col gap-1 py-1">
-          <h1 className="text-xl font-bold text-slate-800 tracking-tight">Colaboradores</h1>
+          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Colaboradores</h1>
         </div>
         
         {/* FORMULARIO ESTILO TOP-PANEL */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200/60 shadow-sm grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-center">
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/80 shadow-sm grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-center">
+          
+          {/* Input de Nombre */}
           <div className="relative flex items-center lg:col-span-2">
-            <User size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
+            <User size={14} className="absolute left-3 text-slate-500 dark:text-slate-400 pointer-events-none" />
             <input 
-              className="w-full pl-8 pr-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white transition-all" 
+              className="w-full pl-8 pr-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-950 transition-all" 
               placeholder="Nombre completo" 
               value={nombre} 
               onChange={e => setNombre(e.target.value)} 
             />
           </div>
 
+          {/* Select de Rol */}
           <div className="relative flex items-center">
-            <Briefcase size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
+            <Briefcase size={14} className="absolute left-3 text-slate-500 dark:text-slate-400 pointer-events-none" />
             <select 
-              className="w-full pl-8 pr-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 outline-none focus:border-indigo-500 focus:bg-white transition-all appearance-none cursor-pointer" 
+              className="w-full pl-8 pr-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-950 transition-all cursor-pointer" 
               value={rol} 
               onChange={e => setRol(e.target.value)}
             >
-              <option value="Colaborador">Colaborador</option>
+              <option value="Colaborador" className="text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900">Colaborador</option>
             </select>
           </div>
 
+          {/* Select de País */}
           <div className="relative flex items-center">
-            <Globe size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
+            <Globe size={14} className="absolute left-3 text-slate-500 dark:text-slate-400 pointer-events-none" />
             <select 
-              className="w-full pl-8 pr-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 outline-none focus:border-indigo-500 focus:bg-white transition-all appearance-none cursor-pointer" 
+              className="w-full pl-8 pr-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-950 transition-all cursor-pointer" 
               value={pais} 
               onChange={e => setPais(e.target.value)}
             >
-              <option value="Colombia">Colombia</option>
-              <option value="Mexico">México</option>
+              <option value="Colombia" className="text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900">Colombia</option>
+              <option value="Mexico" className="text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900">México</option>
             </select>
           </div>
 
+          {/* Botón Agregar */}
           <button 
             onClick={handleAgregar} 
-            className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2 shadow-sm"
+            className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2 shadow-sm"
           >
             <UserPlus size={14} /> 
             Agregar
@@ -252,23 +249,17 @@ export default function ColaboradoresPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3), ease: 'easeOut' }}
-              className="bg-white p-4 rounded-xl border border-slate-200/60 shadow-sm flex items-center justify-between hover:border-slate-300 hover:shadow-md transition-all group"
+              className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/80 shadow-sm flex items-center justify-between hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all group"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div 
-                  className="w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-black text-white shrink-0 shadow-sm"
-                  style={{ backgroundColor: colab.color }}
-                >
-                  {obtenerIniciales(colab.nombre)}
-                </div>
-                
+                {/* 📌 Se eliminó la etiqueta 'div' contenedora de las iniciales para que el texto empiece desde la izquierda */}
                 <div className="min-w-0">
-                  <span className="font-bold text-xs text-slate-700 block truncate">{colab.nombre}</span>
+                  <span className="font-bold text-xs text-slate-700 dark:text-slate-200 block truncate">{colab.nombre}</span>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide">
+                    <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide">
                       {colab.rol}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-medium">
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                       • {colab.pais}
                     </span>
                   </div>
@@ -277,7 +268,7 @@ export default function ColaboradoresPage() {
 
               <button 
                 onClick={() => handlePreEliminar(colab.id, colab.nombre)} 
-                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-60 group-hover:opacity-100"
+                className="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/30 rounded-md transition-colors opacity-60 group-hover:opacity-100"
                 title="Eliminar colaborador"
               >
                 <Trash2 size={15} />
@@ -287,8 +278,8 @@ export default function ColaboradoresPage() {
         </div>
 
         {colaboradores.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-200">
-            <p className="text-xs text-slate-400 font-medium">No hay colaboradores registrados todavía.</p>
+          <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">No hay colaboradores registrados todavía.</p>
           </div>
         )}
 

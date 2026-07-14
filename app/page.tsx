@@ -6,7 +6,6 @@ import { useAuthTimeout } from '../hooks/useAuthTimeout'
 import { ChevronLeft, ChevronRight, CalendarDays, User, PlusCircle, Bookmark, Calendar, CheckCircle2, AlertTriangle, Trash2, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-// Interfaces de tipado para evitar advertencias de TypeScript
 interface Solicitud {
   id: number
   nombre_colaborador: string | null
@@ -21,8 +20,6 @@ interface Colaborador {
 }
 
 export default function CalendarPage() {
-  // 👈 Configurado exactamente a 3 minutos (180000 ms). 
-  // El cierre al bajar la pestaña ya se ejecuta inmediatamente mediante el evento 'beforeunload'.
   useAuthTimeout(180000) 
 
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -145,7 +142,7 @@ export default function CalendarPage() {
 
   return (
     <SidebarLayout activeTab="calendario">
-      <div className="w-full space-y-6 relative">
+      <div className="w-full space-y-6 relative text-slate-900 dark:text-slate-100">
         
         {/* MODAL DE CONFIRMACIÓN */}
         <AnimatePresence>
@@ -156,7 +153,7 @@ export default function CalendarPage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={cerrarModal}
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm dark:bg-black/60"
               />
               
               <motion.div
@@ -164,31 +161,31 @@ export default function CalendarPage() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
                 transition={{ type: 'spring', stiffness: 380, damping: 24 }}
-                className="bg-white border border-slate-200 shadow-2xl rounded-2xl w-full max-w-sm p-5 relative z-10 space-y-4"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl w-full max-w-sm p-5 relative z-10 space-y-4"
               >
                 <button 
                   onClick={cerrarModal}
-                  className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors"
+                  className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors cursor-pointer"
                 >
                   <X size={16} />
                 </button>
 
                 <div className="flex items-start gap-3">
                   <div className={`p-2.5 rounded-xl shrink-0 ${
-                    modalConfirmar.tipoAccion === 'eliminar' ? 'bg-rose-50 text-rose-600' : 'bg-indigo-50 text-indigo-600'
+                    modalConfirmar.tipoAccion === 'eliminar' ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400' : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
                   }`}>
                     {modalConfirmar.tipoAccion === 'eliminar' ? <Trash2 size={18} /> : <AlertTriangle size={18} />}
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-800 tracking-tight">{modalConfirmar.titulo}</h3>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{modalConfirmar.mensaje}</p>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight">{modalConfirmar.titulo}</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{modalConfirmar.mensaje}</p>
                   </div>
                 </div>
 
                 <div className="flex gap-2 pt-1.5 justify-end">
                   <button
                     onClick={cerrarModal}
-                    className="px-3.5 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 border border-slate-200 rounded-xl transition-all"
+                    className="px-3.5 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -197,10 +194,10 @@ export default function CalendarPage() {
                       if (modalConfirmar.tipoAccion === 'guardar') ejecutarGuardar()
                       if (modalConfirmar.tipoAccion === 'eliminar') ejecutarEliminar(modalConfirmar.datosTemporales?.id)
                     }}
-                    className={`px-4 py-2 text-xs font-bold text-white rounded-xl shadow-sm transition-all ${
+                    className={`px-4 py-2 text-xs font-bold text-white rounded-xl shadow-sm transition-all cursor-pointer ${
                       modalConfirmar.tipoAccion === 'eliminar' 
-                        ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-100' 
-                        : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'
+                        ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-100 dark:shadow-none' 
+                        : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100 dark:shadow-none'
                     }`}
                   >
                     Confirmar
@@ -219,14 +216,14 @@ export default function CalendarPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-slate-900/5 backdrop-blur-[0.5px]"
+                className="absolute inset-0 bg-slate-900/5 backdrop-blur-[0.5px] dark:bg-black/20"
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.8, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: -10 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 20 }}
-                className="bg-slate-900 border border-slate-800 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto z-10"
+                className="bg-slate-900 dark:bg-slate-800 border border-slate-800 dark:border-slate-700 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto z-10"
               >
                 <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
                 <span className="text-xs font-bold tracking-wide pr-1 whitespace-nowrap">{mensajeExito}</span>
@@ -236,13 +233,13 @@ export default function CalendarPage() {
         </AnimatePresence>
         
         {/* PANEL DE ASIGNACIÓN */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3.5 items-end">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3.5 items-end transition-colors">
           <div className="relative flex flex-col gap-1 w-full">
-            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Empleado</span>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wide px-1 select-none">Empleado</span>
             <div className="relative flex items-center">
-              <User size={16} className="absolute left-3 text-slate-400 pointer-events-none" />
+              <User size={16} className="absolute left-3 text-slate-400 dark:text-slate-500 pointer-events-none" />
               <select 
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white transition-all appearance-none cursor-pointer" 
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 transition-all appearance-none cursor-pointer" 
                 value={formData.nombre} 
                 onChange={e => setFormData({...formData, nombre: e.target.value})}
               >
@@ -253,13 +250,13 @@ export default function CalendarPage() {
           </div>
           
           <div className="relative flex flex-col gap-1 w-full">
-            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Descripción del Motivo</span>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wide px-1 select-none">Descripción del Motivo</span>
             <div className="relative flex items-center">
-              <Bookmark size={16} className="absolute left-3 text-slate-400 pointer-events-none" />
+              <Bookmark size={16} className="absolute left-3 text-slate-400 dark:text-slate-500 pointer-events-none" />
               <input 
                 type="text" 
                 placeholder="Evento especial" 
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white transition-all" 
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-600 outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 transition-all" 
                 value={formData.desc}
                 onChange={e => setFormData({...formData, desc: e.target.value})}
               />
@@ -267,11 +264,11 @@ export default function CalendarPage() {
           </div>
 
           <div className="relative flex flex-col gap-1 w-full">
-            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Tipo de Ausencia</span>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wide px-1 select-none">Tipo de Ausencia</span>
             <div className="relative flex items-center">
-              <CalendarDays size={16} className="absolute left-3 text-slate-400 pointer-events-none" />
+              <CalendarDays size={16} className="absolute left-3 text-slate-400 dark:text-slate-500 pointer-events-none" />
               <select 
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white transition-all appearance-none cursor-pointer" 
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 transition-all appearance-none cursor-pointer" 
                 value={formData.tipo} 
                 onChange={e => setFormData({...formData, tipo: e.target.value})}
               >
@@ -288,20 +285,20 @@ export default function CalendarPage() {
           </div>
           
           <div className="flex flex-col gap-1 w-full">
-            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Fecha de inicio</span>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wide px-1 select-none">Fecha de inicio</span>
             <input 
               type="date" 
-              className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer" 
+              className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-400 outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 transition-all cursor-pointer" 
               value={formData.inicio} 
               onChange={e => setFormData({...formData, inicio: e.target.value})} 
             />
           </div>
 
           <div className="flex flex-col gap-1 w-full">
-            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Fecha de término</span>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wide px-1 select-none">Fecha de término</span>
             <input 
               type="date" 
-              className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer" 
+              className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-400 outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 transition-all cursor-pointer" 
               value={formData.fin} 
               onChange={e => setFormData({...formData, fin: e.target.value})} 
             />
@@ -311,7 +308,7 @@ export default function CalendarPage() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handlePreGuardar} 
-            className="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-indigo-200 hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 h-[41px]"
+            className="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 h-[41px] cursor-pointer"
           >
             <PlusCircle size={15} />
             Registrar
@@ -319,21 +316,21 @@ export default function CalendarPage() {
         </div>
 
         {/* CABECERA DEL MES */}
-        <div className="flex justify-between items-center bg-white/40 backdrop-blur-sm p-2 rounded-2xl border border-slate-200/40">
-          <h2 className="text-lg font-extrabold capitalize text-slate-800 tracking-tight flex items-center gap-2 px-3">
+        <div className="flex justify-between items-center bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm p-2 rounded-2xl border border-slate-200/40 dark:border-slate-800/60">
+          <h2 className="text-lg font-extrabold capitalize text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2 px-3">
             <Calendar size={18} className="text-indigo-500" />
             {tituloMes}
           </h2>
-          <div className="flex bg-slate-200/60 p-1 rounded-xl items-center gap-0.5">
+          <div className="flex bg-slate-200/60 dark:bg-slate-800 p-1 rounded-xl items-center gap-0.5">
             <button 
               onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} 
-              className="p-1.5 hover:bg-white text-slate-600 hover:text-slate-900 rounded-lg transition-all active:scale-95 shadow-none hover:shadow-sm"
+              className="p-1.5 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg transition-all active:scale-95 shadow-none hover:shadow-sm cursor-pointer"
             >
               <ChevronLeft size={16} />
             </button>
             <button 
               onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} 
-              className="p-1.5 hover:bg-white text-slate-600 hover:text-slate-900 rounded-lg transition-all active:scale-95 shadow-none hover:shadow-sm"
+              className="p-1.5 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg transition-all active:scale-95 shadow-none hover:shadow-sm cursor-pointer"
             >
               <ChevronRight size={16} />
             </button>
@@ -341,10 +338,10 @@ export default function CalendarPage() {
         </div>
 
         {/* CALENDARIO */}
-        <div className="bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/60 dark:border-slate-800/80 shadow-sm transition-colors|">
           <div className="grid grid-cols-7 gap-2 mb-2">
             {['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'].map(d => (
-              <div key={d} className="text-center text-[10px] font-extrabold text-slate-400 tracking-wider py-1 select-none">
+              <div key={d} className="text-center text-[10px] font-extrabold text-slate-400 dark:text-slate-500 tracking-wider py-1 select-none">
                 {d}
               </div>
             ))}
@@ -352,7 +349,7 @@ export default function CalendarPage() {
           
           <div className="grid grid-cols-7 gap-2.5">
             {Array.from({ length: primerDia }).map((_, i) => (
-              <div key={`empty-${i}`} className="h-24 bg-slate-50/40 rounded-2xl border border-slate-100/50" />
+              <div key={`empty-${i}`} className="h-24 bg-slate-50/40 dark:bg-slate-950/20 rounded-2xl border border-slate-100/50 dark:border-slate-800/40" />
             ))}
             
             {Array.from({ length: diasEnMes }).map((_, i) => {
@@ -397,18 +394,18 @@ export default function CalendarPage() {
                   transition={{ duration: 0.15, delay: Math.min(i * 0.015, 0.3) }}
                   className={`h-24 p-2 rounded-2xl border flex flex-col justify-between relative group transform transition-all duration-200 ${
                     esHoy 
-                      ? 'border-indigo-500 bg-indigo-50/10 shadow-sm shadow-indigo-100' 
+                      ? 'border-indigo-500 bg-indigo-50/10 dark:bg-indigo-950/20 shadow-sm shadow-indigo-100 dark:shadow-none' 
                       : esFinDeSemana
-                        ? 'border-slate-200 bg-slate-100/70 shadow-inner' 
-                        : 'border-slate-100 bg-white hover:border-slate-300/80 hover:-translate-y-0.5 hover:shadow-md'
+                        ? 'border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-950/40 shadow-inner' 
+                        : 'border-slate-100 dark:border-slate-800/60 bg-white dark:bg-slate-900/60 hover:border-slate-300/80 dark:hover:border-slate-700 hover:-translate-y-0.5 hover:shadow-md'
                   }`}
                 >
                   <span className={`text-xs font-bold select-none ${
                     esHoy 
-                      ? 'text-indigo-600 bg-indigo-100/80 px-1.5 py-0.5 rounded-md w-fit' 
+                      ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-100/80 dark:bg-indigo-950/80 px-1.5 py-0.5 rounded-md w-fit' 
                       : esFinDeSemana 
-                        ? 'text-slate-500 bg-slate-200/60 px-1.5 py-0.5 rounded-md w-fit text-[11px]' 
-                        : 'text-slate-400'
+                        ? 'text-slate-500 dark:text-slate-400 bg-slate-200/60 dark:bg-slate-800/60 px-1.5 py-0.5 rounded-md w-fit text-[11px]' 
+                        : 'text-slate-400 dark:text-slate-500'
                   }`}>
                     {dia}
                   </span>
@@ -429,14 +426,15 @@ export default function CalendarPage() {
                         
                         <button 
                           onClick={(e) => { e.stopPropagation(); handlePreEliminar(sol.id, nombreColaborador || sol.descripcion); }} 
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-black/10 hover:bg-black/30 text-white rounded-md w-4 h-4 flex items-center justify-center text-[8px] font-black transition-colors z-10"
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-black/10 hover:bg-black/30 text-white rounded-md w-4 h-4 flex items-center justify-center text-[8px] font-black transition-colors z-10 cursor-pointer"
                         >
                           ✕
                         </button>
                       </div>
 
-                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2.5 w-52 p-3.5 bg-slate-950/95 text-white text-xs rounded-2xl shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-150 pointer-events-none z-50 border border-slate-800 backdrop-blur-md scale-95 group-hover:scale-100 transform origin-bottom flex flex-col gap-1.5">
-                        <div className="font-extrabold text-sm tracking-tight border-b border-slate-800 pb-1.5 text-slate-100 truncate">
+                      {/* TOOLTIP EMERGENTE */}
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2.5 w-52 p-3.5 bg-slate-950/95 dark:bg-slate-900 text-white text-xs rounded-2xl shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-150 pointer-events-none z-50 border border-slate-800 dark:border-slate-700 backdrop-blur-md scale-95 group-hover:scale-100 transform origin-bottom flex flex-col gap-1.5">
+                        <div className="font-extrabold text-sm tracking-tight border-b border-slate-800 dark:border-slate-700 pb-1.5 text-slate-100 truncate">
                           {nombreColaborador || sol.descripcion}
                         </div>
                         
@@ -449,14 +447,14 @@ export default function CalendarPage() {
                         </div>
 
                         {sol.descripcion && sol.tipo !== 'especial' && (
-                          <div className="text-[10px] text-slate-400 bg-slate-900 px-2 py-1 rounded-lg italic truncate">
+                          <div className="text-[10px] text-slate-400 bg-slate-900 dark:bg-slate-950 px-2 py-1 rounded-lg italic truncate">
                             "{sol.descripcion}"
                           </div>
                         )}
 
-                        <div className="mt-1 text-[10px] font-mono text-slate-400 flex justify-between items-center bg-slate-900/60 px-2 py-1 rounded-lg">
+                        <div className="mt-1 text-[10px] font-mono text-slate-400 flex justify-between items-center bg-slate-900/60 dark:bg-slate-950/60 px-2 py-1 rounded-lg">
                           <span>{sol.inicio}</span>
-                          <span className="text-slate-600 text-[9px] lowercase font-sans">al</span>
+                          <span className="text-slate-600 dark:text-slate-500 text-[9px] lowercase font-sans">al</span>
                           <span>{sol.final}</span>
                         </div>
                       </div>

@@ -2,9 +2,14 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import SidebarLayout from '../../components/SidebarLayout'
+import { useAuthTimeout } from '../../hooks/useAuthTimeout'
 import { ClipboardList, Calendar, User, Tag, Clock } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function RegistroPage() {
+  // Cierre de sesión por inactividad a los 3 minutos (180000 ms) y al cerrar pestaña
+  useAuthTimeout(180000)
+
   const [solicitudes, setSolicitudes] = useState<any[]>([])
 
   useEffect(() => {
@@ -21,58 +26,93 @@ export default function RegistroPage() {
     return diff > 0 ? diff : 0
   }
 
-  // Formatea las fechas para que se vean profesionales (ej: 01 jul 2026)
   const formatearFecha = (fechaStr: string) => {
     const fecha = new Date(fechaStr)
-    fecha.setMinutes(fecha.getMinutes() + fecha.getTimezoneOffset()) // Ajuste de zona horaria
+    fecha.setMinutes(fecha.getMinutes() + fecha.getTimezoneOffset())
     return fecha.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
-  // Estilos dinámicos para los badges de tipos de ausencia
+  // 🎨 Estilos dinámicos para Badges adaptados al Modo Claro y Modo Oscuro
   const obtenerEstiloBadge = (tipo: string) => {
     switch (tipo?.toLowerCase()) {
       case 'vacaciones':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-100'
+        return 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/60'
       case 'permiso':
-        return 'bg-blue-50 text-blue-700 border-blue-100'
+        return 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-900/60'
       case 'ausencia':
-        return 'bg-rose-50 text-rose-700 border-rose-100'
+        return 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-100 dark:border-rose-900/60'
       case 'especial':
       default:
-        return 'bg-amber-50 text-amber-700 border-amber-100'
+        return 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-900/60'
     }
+  }
+
+  // Variantes de animación para las filas de la tabla
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.04 // Retraso secuencial entre cada fila
+      }
+    }
+  }
+
+  const rowVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 25 } }
   }
 
   return (
     <SidebarLayout activeTab="registro">
-      <div className="w-full space-y-6 p-2">
+      <div className="w-full space-y-6 p-2 text-slate-900 dark:text-slate-100">
         
-        {/* ENCABEZADO DE LA PÁGINA */}
-        <div className="flex flex-col gap-1 py-1">
-          <h2 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            <ClipboardList size={22} className="text-indigo-500" />
+        {/* ENCABEZADO DE LA PÁGINA ANIMADO */}
+        <motion.div 
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex flex-col gap-1 py-1"
+        >
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
+            <ClipboardList size={22} className="text-indigo-500 dark:text-indigo-400" />
             Registro
           </h2>
-          <p className="text-xs text-slate-400">Historial de días asignados por colaborador.</p>
-        </div>
+          <p className="text-xs text-slate-400 dark:text-slate-500">Historial de días asignados por colaborador.</p>
+        </motion.div>
 
-        {/* TABLA ESTILIZADA PREMIUM */}
-        <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm overflow-hidden">
+        {/* TABLA ESTILIZADA PREMIUM CON ANIMACIÓN Y SOPORTE OSCURO */}
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800/80 shadow-sm overflow-hidden"
+        >
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/70 border-b border-slate-200/60 text-slate-400 font-bold text-[10px] tracking-wider uppercase">
+                <tr className="bg-slate-50/70 dark:bg-slate-950/40 border-b border-slate-200/60 dark:border-slate-800/80 text-slate-400 dark:text-slate-500 font-bold text-[10px] tracking-wider uppercase">
                   <th className="py-3 px-5 flex items-center gap-2"><User size={12} /> Colaborador</th>
                   <th className="py-3 px-4"><Tag size={12} className="inline mr-1" /> Tipo</th>
                   <th className="py-3 px-4"><Calendar size={12} className="inline mr-1" /> Período</th>
                   <th className="py-3 px-5 text-center"><Clock size={12} className="inline mr-1" /> Total Días</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+              <motion.tbody 
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs"
+              >
                 {solicitudes.map((sol) => (
-                  <tr key={sol.id} className="hover:bg-slate-50/80 transition-colors group">
+                  <motion.tr 
+                    key={sol.id} 
+                    variants={rowVariants}
+                    // 💡 Modificamos el hover de Framer Motion para usar una variable CSS o una clase Tailwind en lugar de un color fijo hexadecimal
+                    whileHover={{ className: "bg-slate-50/80 dark:bg-slate-850/40 transition-colors duration-100" }}
+                    className="transition-colors group"
+                  >
                     {/* Nombre del Colaborador */}
-                    <td className="py-3.5 px-5 font-bold text-slate-700">
+                    <td className="py-3.5 px-5 font-bold text-slate-700 dark:text-slate-200">
                       {sol.nombre_colaborador || sol.descripcion}
                     </td>
                     
@@ -84,29 +124,39 @@ export default function RegistroPage() {
                     </td>
                     
                     {/* Rango de Fechas Formateado */}
-                    <td className="py-3.5 px-4 text-slate-500 font-medium">
-                      {formatearFecha(sol.inicio)} <span className="text-slate-300 mx-1">→</span> {formatearFecha(sol.final)}
+                    <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 font-medium">
+                      {formatearFecha(sol.inicio)} <span className="text-slate-300 dark:text-slate-700 mx-1">→</span> {formatearFecha(sol.final)}
                     </td>
                     
                     {/* Días Totales */}
                     <td className="py-3.5 px-5 text-center">
-                      <span className="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-md font-extrabold text-[11px]">
+                      <motion.span 
+                        whileHover={{ scale: 1.05 }}
+                        className="inline-block px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-md font-extrabold text-[11px]"
+                      >
                         {calcularDias(sol.inicio, sol.final)} {calcularDias(sol.inicio, sol.final) === 1 ? 'día' : 'días'}
-                      </span>
+                      </motion.span>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
-              </tbody>
+              </motion.tbody>
             </table>
           </div>
 
-          {/* Estado vacío si no hay solicitudes registradas */}
-          {solicitudes.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-xs text-slate-400 font-medium">No se han encontrado registros en el historial.</p>
-            </div>
-          )}
-        </div>
+          {/* Estado vacío con AnimatePresence */}
+          <AnimatePresence>
+            {solicitudes.length === 0 && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center py-12 bg-white dark:bg-slate-900"
+              >
+                <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">No se han encontrado registros en el historial.</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
       </div>
     </SidebarLayout>
