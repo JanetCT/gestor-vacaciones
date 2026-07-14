@@ -2,13 +2,31 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import SidebarLayout from '../components/SidebarLayout'
+import { useAuthTimeout } from '../hooks/useAuthTimeout' // 👈 Importación del hook agregada aquí
 import { ChevronLeft, ChevronRight, CalendarDays, User, PlusCircle, Bookmark, Calendar, CheckCircle2, AlertTriangle, Trash2, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
+// Interfaces de tipado para evitar advertencias de TypeScript
+interface Solicitud {
+  id: number
+  nombre_colaborador: string | null
+  inicio: string
+  final: string
+  tipo: string
+  descripcion: string
+}
+
+interface Colaborador {
+  nombre: string
+}
+
 export default function CalendarPage() {
+  // 👈 Activación del cierre automático por inactividad y cierre de pestaña
+  useAuthTimeout() 
+
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [solicitudes, setSolicitudes] = useState<any[]>([])
-  const [listaColaboradores, setListaColaboradores] = useState<any[]>([])
+  const [solicitudes, setSolicitudes] = useState<Solicitud[]>([])
+  const [listaColaboradores, setListaColaboradores] = useState<Colaborador[]>([])
   const [formData, setFormData] = useState({ nombre: '', inicio: '', fin: '', tipo: 'vacaciones', desc: '' })
   
   // Estado para el mensaje de éxito animado
@@ -49,20 +67,20 @@ export default function CalendarPage() {
 
   async function fetchSolicitudes() {
     const { data } = await supabase.from('solicitudes').select('*')
-    if (data) setSolicitudes(data)
+    if (data) setSolicitudes(data as Solicitud[])
   }
 
   async function fetchColaboradores() {
     const { data } = await supabase.from('colaboradores').select('nombre')
-    if (data) setListaColaboradores(data)
+    if (data) setListaColaboradores(data as Colaborador[])
   }
 
   const handlePreEliminar = (id: number, nombreAsignado: string) => {
     setModalConfirmar({
       isOpen: true,
       tipoAccion: 'eliminar',
-      titulo: 'Eliminar Asignación',
-      mensaje: `¿Estás seguro de que deseas eliminar permanentemente la asignación de "${nombreAsignado}"?`,
+      titulo: 'Eliminar Registro',
+      mensaje: `¿Estás seguro de que deseas eliminar permanentemente el registro de "${nombreAsignado}"?`,
       datosTemporales: { id }
     })
   }
@@ -71,7 +89,7 @@ export default function CalendarPage() {
     const { error } = await supabase.from('solicitudes').delete().eq('id', id)
     if (!error) {
       cerrarModal()
-      mostrarAlertaExito("Asignación eliminada correctamente")
+      mostrarAlertaExito("Registro eliminado correctamente")
       fetchSolicitudes()
     }
   }
@@ -79,8 +97,11 @@ export default function CalendarPage() {
   const handlePreGuardar = () => {
     if (!formData.inicio || !formData.fin) return
     
-    if (new Date(formData.fin) < new Date(formData.inicio)) {
-      alert("La fecha final no puede ser anterior a la fecha de inicio.");
+    const fechaInicio = new Date(formData.inicio + 'T00:00:00')
+    const fechaFin = new Date(formData.fin + 'T00:00:00')
+
+    if (fechaFin < fechaInicio) {
+      alert("La fecha de término no puede ser anterior a la fecha de inicio.");
       return;
     }
 
@@ -89,7 +110,7 @@ export default function CalendarPage() {
       isOpen: true,
       tipoAccion: 'guardar',
       titulo: 'Confirmar Registro',
-      mensaje: `¿Confirmas la asignación de ${formData.tipo} para "${sujeto}"?`
+      mensaje: `¿Confirmas el registro de ${formData.tipo} para "${sujeto}"?`
     })
   }
 
@@ -105,7 +126,7 @@ export default function CalendarPage() {
     if (!error) {
       setFormData({ nombre: '', inicio: '', fin: '', tipo: 'vacaciones', desc: '' })
       cerrarModal()
-      mostrarAlertaExito("¡Asignado completamente con éxito!")
+      mostrarAlertaExito("¡Registrado con éxito!")
       fetchSolicitudes()
     }
   }
@@ -221,7 +242,7 @@ export default function CalendarPage() {
         {/* PANEL DE ASIGNACIÓN */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3.5 items-end">
           <div className="relative flex flex-col gap-1 w-full">
-            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Colaborador</span>
+            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Empleado</span>
             <div className="relative flex items-center">
               <User size={16} className="absolute left-3 text-slate-400 pointer-events-none" />
               <select 
@@ -236,7 +257,7 @@ export default function CalendarPage() {
           </div>
           
           <div className="relative flex flex-col gap-1 w-full">
-            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Detalle</span>
+            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Descripción del Motivo</span>
             <div className="relative flex items-center">
               <Bookmark size={16} className="absolute left-3 text-slate-400 pointer-events-none" />
               <input 
@@ -250,7 +271,7 @@ export default function CalendarPage() {
           </div>
 
           <div className="relative flex flex-col gap-1 w-full">
-            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Categoría</span>
+            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Tipo de Ausencia</span>
             <div className="relative flex items-center">
               <CalendarDays size={16} className="absolute left-3 text-slate-400 pointer-events-none" />
               <select 
@@ -276,7 +297,7 @@ export default function CalendarPage() {
           </div>
 
           <div className="flex flex-col gap-1 w-full">
-            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Fecha de final</span>
+            <span className="text-[10px] font-bold text-slate-400 tracking-wide px-1 select-none">Fecha de término</span>
             <input 
               type="date" 
               className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer" 
@@ -292,7 +313,7 @@ export default function CalendarPage() {
             className="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-indigo-200 hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 h-[41px]"
           >
             <PlusCircle size={15} />
-            Asignar
+            Registrar
           </motion.button>
         </div>
 
@@ -337,19 +358,20 @@ export default function CalendarPage() {
               const dia = i + 1
               const fechaCelda = new Date(currentDate.getFullYear(), currentDate.getMonth(), dia)
               
-              // DETECTAR FIN DE SEMANA: Domingo = 0, Sábado = 6
+              fechaCelda.setHours(0, 0, 0, 0)
+              
               const diaSemana = fechaCelda.getDay()
               const esFinDeSemana = diaSemana === 0 || diaSemana === 6
 
               const sol = solicitudes.find(s => {
-                const inicio = new Date(s.inicio); inicio.setMinutes(inicio.getMinutes() + inicio.getTimezoneOffset());
-                const fin = new Date(s.final); fin.setMinutes(fin.getMinutes() + fin.getTimezoneOffset());
+                const inicio = new Date(s.inicio + 'T00:00:00');
+                const fin = new Date(s.final + 'T00:00:00');
                 const start = inicio < fin ? inicio : fin;
                 const end = inicio < fin ? fin : inicio;
+                
                 return fechaCelda >= start && fechaCelda <= end
               })
 
-              // SEPARAR TEXTOS: Nombre arriba, Tipo/Detalle abajo
               const nombreColaborador = sol ? sol.nombre_colaborador : '';
               const tipoAusencia = sol 
                 ? (sol.tipo === 'especial' ? sol.descripcion : sol.tipo.charAt(0).toUpperCase() + sol.tipo.slice(1))
@@ -392,10 +414,9 @@ export default function CalendarPage() {
 
                   {sol && (
                     <div className="relative w-full mt-auto">
-                      {/* TARJETA EN DOS LÍNEAS LIMPIA Y COMPACTA */}
                       <div 
                         className="text-white px-2.5 py-1.5 rounded-xl cursor-pointer transition-all hover:brightness-105 flex flex-col gap-0.5 shadow-sm pr-7 relative group/badge overflow-hidden" 
-                        style={{ backgroundColor: sol.tipo === 'especial' ? '#f59e0b' : generarColor(sol.nombre_colaborador) }}
+                        style={{ backgroundColor: sol.tipo === 'especial' ? '#f59e0b' : generarColor(sol.nombre_colaborador ?? '') }}
                       >
                         <span className="text-[11px] font-bold truncate tracking-wide leading-tight">
                           {nombreColaborador || sol.descripcion}
@@ -413,7 +434,6 @@ export default function CalendarPage() {
                         </button>
                       </div>
 
-                      {/* TOOLTIP FLOTANTE PREMIUM ASÍNCRONO */}
                       <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2.5 w-52 p-3.5 bg-slate-950/95 text-white text-xs rounded-2xl shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-150 pointer-events-none z-50 border border-slate-800 backdrop-blur-md scale-95 group-hover:scale-100 transform origin-bottom flex flex-col gap-1.5">
                         <div className="font-extrabold text-sm tracking-tight border-b border-slate-800 pb-1.5 text-slate-100 truncate">
                           {nombreColaborador || sol.descripcion}
@@ -434,9 +454,9 @@ export default function CalendarPage() {
                         )}
 
                         <div className="mt-1 text-[10px] font-mono text-slate-400 flex justify-between items-center bg-slate-900/60 px-2 py-1 rounded-lg">
-                          <span>{sol.inicio.split('T')[0]}</span>
+                          <span>{sol.inicio}</span>
                           <span className="text-slate-600 text-[9px] lowercase font-sans">al</span>
-                          <span>{sol.final.split('T')[0]}</span>
+                          <span>{sol.final}</span>
                         </div>
                       </div>
                     </div>
