@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase' // Ajusta esta ruta si tu archivo de supabase está en otro lugar
 
 // Tiempo límite por defecto: 15 minutos (15 * 60 * 1000)
-const TIEMPO_DEFAULT = 15 * 60 * 1000
+const TIEMPO_DEFAULT = 3 * 60 * 1000
 
 export function useAuthTimeout(tiempoLimite: number = TIEMPO_DEFAULT) {
   const router = useRouter()

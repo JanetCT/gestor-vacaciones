@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import SidebarLayout from '../components/SidebarLayout'
-import { useAuthTimeout } from '../hooks/useAuthTimeout' // 👈 Importación del hook agregada aquí
+import { useAuthTimeout } from '../hooks/useAuthTimeout'
 import { ChevronLeft, ChevronRight, CalendarDays, User, PlusCircle, Bookmark, Calendar, CheckCircle2, AlertTriangle, Trash2, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -21,18 +21,16 @@ interface Colaborador {
 }
 
 export default function CalendarPage() {
-  // 👈 Activación del cierre automático por inactividad y cierre de pestaña
-  useAuthTimeout() 
+  // 👈 Configurado exactamente a 3 minutos (180000 ms). 
+  // El cierre al bajar la pestaña ya se ejecuta inmediatamente mediante el evento 'beforeunload'.
+  useAuthTimeout(180000) 
 
   const [currentDate, setCurrentDate] = useState(new Date())
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([])
   const [listaColaboradores, setListaColaboradores] = useState<Colaborador[]>([])
   const [formData, setFormData] = useState({ nombre: '', inicio: '', fin: '', tipo: 'vacaciones', desc: '' })
-  
-  // Estado para el mensaje de éxito animado
   const [mensajeExito, setMensajeExito] = useState<string | null>(null)
 
-  // Control del modal de confirmación personalizado
   const [modalConfirmar, setModalConfirmar] = useState<{
     isOpen: boolean;
     tipoAccion: 'guardar' | 'eliminar' | null;
@@ -149,9 +147,7 @@ export default function CalendarPage() {
     <SidebarLayout activeTab="calendario">
       <div className="w-full space-y-6 relative">
         
-        {/* ========================================================= */}
-        {/* DIÁLOGO/MODAL DE CONFIRMACIÓN PERSONALIZADO               */}
-        {/* ========================================================= */}
+        {/* MODAL DE CONFIRMACIÓN */}
         <AnimatePresence>
           {modalConfirmar.isOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -215,7 +211,7 @@ export default function CalendarPage() {
           )}
         </AnimatePresence>
 
-        {/* NOTIFICACIÓN ANIMADA FLOTANTE DE ÉXITO */}
+        {/* NOTIFICACIÓN ANIMADA */}
         <AnimatePresence>
           {mensajeExito && (
             <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
@@ -287,7 +283,6 @@ export default function CalendarPage() {
                 <option value="horas_extras">Horas extras</option>
                 <option value="cubrimientos">Cubrimientos operativos</option>
                 <option value="dia_especial">Días Especiales</option>
-                
               </select>
             </div>
           </div>
@@ -323,7 +318,7 @@ export default function CalendarPage() {
           </motion.button>
         </div>
 
-        {/* CABECERA DEL MES Y NAVEGACIÓN */}
+        {/* CABECERA DEL MES */}
         <div className="flex justify-between items-center bg-white/40 backdrop-blur-sm p-2 rounded-2xl border border-slate-200/40">
           <h2 className="text-lg font-extrabold capitalize text-slate-800 tracking-tight flex items-center gap-2 px-3">
             <Calendar size={18} className="text-indigo-500" />
@@ -345,7 +340,7 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* CALENDARIO DE MATRIZ MODERNO */}
+        {/* CALENDARIO */}
         <div className="bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm">
           <div className="grid grid-cols-7 gap-2 mb-2">
             {['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'].map(d => (
