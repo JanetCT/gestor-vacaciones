@@ -280,8 +280,14 @@ export default function CalendarPage() {
                 onChange={e => setFormData({...formData, tipo: e.target.value})}
               >
                 <option value="vacaciones">Vacaciones</option>
-                <option value="permiso">Permiso</option>
-                <option value="especial">Evento Especial</option>
+                <option value="permisos">Permisos personales</option>
+                <option value="licencias">Licencias</option>
+                <option value="homeoffice">Home Office</option>
+                <option value="incapacidades">Incapacidades</option>
+                <option value="horas_extras">Horas extras</option>
+                <option value="cubrimientos">Cubrimientos operativos</option>
+                <option value="dia_especial">Días Especiales</option>
+                
               </select>
             </div>
           </div>
