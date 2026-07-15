@@ -1,10 +1,9 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { Calendar, Users, ClipboardList, LogOut, Sun, Moon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Calendar, Users, List, LogOut, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react'
-import { supabase } from '../lib/supabase'
-import { logoutAction } from '@/app/login/actions'
+import { supabase } from '../lib/supabase' // Asegúrate de que esta ruta sea la correcta en tu proyecto
 
 interface SidebarLayoutProps {
   children: React.ReactNode
@@ -12,31 +11,25 @@ interface SidebarLayoutProps {
 }
 
 export default function SidebarLayout({ children, activeTab }: SidebarLayoutProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [darkMode, setDarkMode] = useState(false)
   const router = useRouter()
+  const [darkMode, setDarkMode] = useState<boolean | null>(null) // Evita parpadeos de hidratación en Next.js
 
+  // 1. Cargar el tema inicial respetando localStorage o el sistema
   useEffect(() => {
-    const savedState = localStorage.getItem('sidebar_collapsed')
-    if (savedState) setIsCollapsed(savedState === 'true')
+    const savedTheme = localStorage.getItem('theme')
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
 
-    const temaGuardado = localStorage.getItem('theme')
-    if (temaGuardado === 'dark') {
-      document.documentElement.classList.add('dark')
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
       setDarkMode(true)
+      document.documentElement.classList.add('dark')
     } else {
-      document.documentElement.classList.remove('dark')
       setDarkMode(false)
+      document.documentElement.classList.remove('dark')
     }
   }, [])
 
-  const toggleSidebar = () => {
-    const newState = !isCollapsed
-    setIsCollapsed(newState)
-    localStorage.setItem('sidebar_collapsed', String(newState))
-  }
-
-  const toggleDarkMode = () => {
+  // 2. Alternar entre modo claro y oscuro
+  const toggleTheme = () => {
     if (darkMode) {
       document.documentElement.classList.remove('dark')
       localStorage.setItem('theme', 'light')
@@ -48,110 +41,100 @@ export default function SidebarLayout({ children, activeTab }: SidebarLayoutProp
     }
   }
 
-  const handleLogout = async () => {
-    await logoutAction()
+  const handleCerrarSesion = async () => {
     await supabase.auth.signOut()
-    router.push('/login')
+    router.push('/login') // Cambia a tu ruta de login si es diferente
   }
 
   return (
-    // 🎛️ Aquí unificamos fondos con el body y añadimos una transición suave
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased relative transition-colors duration-200">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
       
-      {/* 🧭 MENÚ LATERAL */}
-      <aside className={`bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between p-4 shrink-0 relative transition-all duration-200 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+      {/* BARRA LATERAL (SIDEBAR) */}
+      <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-800/80 flex flex-col justify-between p-4 shrink-0">
         
-        {/* 🔘 BOTÓN FLOTANTE PARA EXPANDIR/OCULTAR */}
-        <button 
-          onClick={toggleSidebar} 
-          className="absolute -right-3 top-7 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:scale-110 shadow-sm z-10 transition-transform duration-150 cursor-pointer"
-        >
-          {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
-
+        {/* Parte superior: Navegación */}
         <div className="space-y-6">
-          {/* Logo / Nombre del proyecto */}
-          <div className="flex items-center gap-2 py-1 px-2 select-none">
-            <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-sm">
-              LT
-            </div>
-            {!isCollapsed && <span className="font-black text-sm tracking-wider uppercase text-slate-800 dark:text-slate-200">LETS TRIP</span>}
+          <div className="px-2 py-1">
+            <span className="text-lg font-black tracking-wider bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
+              MI APP
+            </span>
           </div>
 
-          {/* Enlaces de Navegación */}
-          <nav className="space-y-1.5">
+          <nav className="space-y-1">
             <Link 
-              href="/" 
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 origin-left
-                ${activeTab === 'calendario' 
-                  ? 'bg-indigo-600 text-white shadow-md dark:shadow-none scale-[1.02]' 
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100 hover:translate-x-1'}`}
+              href="/calendario" 
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'calendario' 
+                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm' 
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+              }`}
             >
-              <Calendar size={16} /> 
-              {!isCollapsed && <span>Calendario</span>}
+              <Calendar size={16} />
+              Calendario
             </Link>
 
             <Link 
               href="/colaboradores" 
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 origin-left
-                ${activeTab === 'colaboradores' 
-                  ? 'bg-indigo-600 text-white shadow-md dark:shadow-none scale-[1.02]' 
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100 hover:translate-x-1'}`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'colaboradores' 
+                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm' 
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+              }`}
             >
-              <Users size={16} /> 
-              {!isCollapsed && <span>Colaboradores</span>}
+              <Users size={16} />
+              Colaboradores
             </Link>
 
             <Link 
               href="/registro" 
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 origin-left
-                ${activeTab === 'registro' 
-                  ? 'bg-indigo-600 text-white shadow-md dark:shadow-none scale-[1.02]' 
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100 hover:translate-x-1'}`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'registro' 
+                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm' 
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+              }`}
             >
-              <List size={16} /> 
-              {!isCollapsed && <span>Registro</span>}
+              <ClipboardList size={16} />
+              Registro
             </Link>
           </nav>
         </div>
 
-        {/* SECCIÓN INFERIOR: MODO OSCURO + CERRAR SESIÓN */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+        {/* Parte inferior: Botones de Configuración y Cierre */}
+        <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800/60">
           
-          {/* BOTÓN MODO OSCURO */}
-          <button
-            onClick={toggleDarkMode}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-800 dark:hover:text-slate-200 transition-colors duration-150 cursor-pointer
-              ${isCollapsed ? 'justify-center' : ''}`}
-          >
-            {darkMode ? (
-              <>
-                <Sun size={16} className="text-amber-500 shrink-0" />
-                {!isCollapsed && <span>Modo Claro</span>}
-              </>
-            ) : (
-              <>
-                <Moon size={16} className="text-indigo-500 shrink-0" />
-                {!isCollapsed && <span>Modo Oscuro</span>}
-              </>
-            )}
-          </button>
+          {/* BOTÓN MODO CLARO / OSCURO (Evita renderizarse vacío durante la hidratación) */}
+          {darkMode !== null && (
+            <button
+              onClick={toggleTheme}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-slate-200/40 dark:border-slate-800/40 transition-all"
+            >
+              {darkMode ? (
+                <>
+                  <Sun size={16} className="text-amber-500" />
+                  <span>Modo Claro</span>
+                </>
+              ) : (
+                <>
+                  <Moon size={16} className="text-indigo-400" />
+                  <span>Modo Oscuro</span>
+                </>
+              )}
+            </button>
+          )}
 
-          {/* BOTÓN DE LOGOUT */}
-          <button 
-            onClick={handleLogout} 
-            className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl transition-all duration-150 ease-in-out cursor-pointer
-              ${isCollapsed ? 'justify-center' : 'hover:translate-x-1'}`}
+          {/* Botón Cerrar Sesión */}
+          <button
+            onClick={handleCerrarSesion}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all"
           >
-            <LogOut size={16} className="shrink-0" /> 
-            {!isCollapsed && <span>Cerrar Sesión</span>}
+            <LogOut size={16} />
+            Cerrar Sesión
           </button>
         </div>
-
       </aside>
 
       {/* CONTENIDO PRINCIPAL */}
-      <main className="flex-1 p-8 overflow-y-auto bg-slate-50 dark:bg-slate-950 transition-colors duration-200">
+      <main className="flex-1 p-6 overflow-y-auto">
         {children}
       </main>
     </div>
