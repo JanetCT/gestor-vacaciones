@@ -58,9 +58,18 @@ export default function RegistroPage() {
     }
   }
 
+  // Se añade "as const" al final de la transición spring para resolver estrictamente el tipado de TypeScript
   const rowVariants = {
     hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 25 } }
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { 
+        type: 'spring', 
+        stiffness: 300, 
+        damping: 25 
+      } as const
+    }
   }
 
   return (
@@ -107,9 +116,8 @@ export default function RegistroPage() {
                   <motion.tr 
                     key={sol.id} 
                     variants={rowVariants}
-                    // 💡 Modificamos el hover de Framer Motion para usar una variable CSS o una clase Tailwind en lugar de un color fijo hexadecimal
-                    whileHover={{ className: "bg-slate-50/80 dark:bg-slate-850/40 transition-colors duration-100" }}
-                    className="transition-colors group"
+                    // 💡 Solución: Quitamos 'whileHover={{ className: ... }}' y aplicamos las clases de hover directamente en className
+                    className="transition-colors duration-150 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 group cursor-default"
                   >
                     {/* Nombre del Colaborador */}
                     <td className="py-3.5 px-5 font-bold text-slate-700 dark:text-slate-200">
