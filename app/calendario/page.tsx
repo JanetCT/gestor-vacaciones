@@ -1,8 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
-import SidebarLayout from '../components/SidebarLayout'
-import { useAuthTimeout } from '../hooks/useAuthTimeout'
+import { supabase } from '../../lib/supabase'
+import SidebarLayout from '../../components/SidebarLayout'
+import { useAuthTimeout } from '../../hooks/useAuthTimeout'
 import { ChevronLeft, ChevronRight, CalendarDays, User, PlusCircle, Bookmark, Calendar, CheckCircle2, AlertTriangle, Trash2, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 

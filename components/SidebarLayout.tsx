@@ -1,176 +1,169 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { Calendar, Users, ClipboardList, LogOut, Sun, Moon, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { supabase } from '../lib/supabase' // Ajusta esta ruta según tu proyecto
-import { motion } from 'framer-motion'
+import { usePathname } from 'next/navigation'
+import { logoutAction } from '@/app/login/actions' // <-- RUTA CORREGIDA Y BLINDADA
+import { 
+  Calendar, 
+  Users, 
+  Clipboard, 
+  Sun, 
+  Moon, 
+  LogOut
+} from 'lucide-react'
 
 interface SidebarLayoutProps {
   children: React.ReactNode
-  activeTab: 'calendario' | 'colaboradores' | 'registro'
+  activeTab: string
 }
 
 export default function SidebarLayout({ children, activeTab }: SidebarLayoutProps) {
-  const router = useRouter()
-  const [mounted, setMounted] = useState(false)
-  const [darkMode, setDarkMode] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const pathname = usePathname()
+  const [isDarkMode, setIsDarkMode] = useState(false)
 
-  // 1. Evitar errores de hidratación en Vercel cargando el tema solo en el cliente
+  // Sincronizar el tema original (Light/Dark mode)
   useEffect(() => {
-    setMounted(true)
     const savedTheme = localStorage.getItem('theme')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      setDarkMode(true)
+      setIsDarkMode(true)
       document.documentElement.classList.add('dark')
     } else {
-      setDarkMode(false)
+      setIsDarkMode(false)
       document.documentElement.classList.remove('dark')
     }
   }, [])
 
-  // 2. Alternar entre modo claro y oscuro
-  const toggleTheme = () => {
-    if (darkMode) {
+  // Alternar entre modo claro y oscuro
+  const toggleDarkMode = () => {
+    if (isDarkMode) {
       document.documentElement.classList.remove('dark')
       localStorage.setItem('theme', 'light')
-      setDarkMode(false)
+      setIsDarkMode(false)
     } else {
       document.documentElement.classList.add('dark')
       localStorage.setItem('theme', 'dark')
-      setDarkMode(true)
+      setIsDarkMode(true)
     }
   }
 
-  const handleCerrarSesion = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
+  // CERRAMOS SESIÓN COMPLETAMENTE
+  const handleSignOut = async () => {
+    try {
+      // 1. Intentamos cerrar sesión en el servidor para limpiar cookies de Supabase
+      await logoutAction()
+    } catch (error) {
+      console.error('Error al cerrar sesión en el servidor:', error)
+    } finally {
+      try {
+        // 2. RESPALDO SEGURO: Borramos cookies accesibles por cliente sin crasear el bucle
+        const cookies = document.cookie.split(";")
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i]
+          const eqPos = cookie.indexOf("=")
+          const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
+          if (name) {
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;`
+          }
+        }
+      } catch (cookieError) {
+        console.error('Error limpiando cookies locales:', cookieError)
+      }
+
+      // 3. Limpiamos cualquier rastro en sessionStorage/localStorage
+      sessionStorage.clear()
+
+      // 4. Redirección dura, limpia e instantánea al login (¡Fuera de peligro!)
+      window.location.href = '/login'
+    }
   }
 
+  // Tus 3 rutas reales exactas
+  const navItems = [
+    { id: 'calendario', label: 'Calendario', href: '/calendario', icon: Calendar },
+    { id: 'colaboradores', label: 'Colaboradores', href: '/colaboradores', icon: Users },
+    { id: 'registro', label: 'Registro', href: '/registro', icon: Clipboard },
+  ]
+
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
       
-      {/* BARRA LATERAL (SIDEBAR) CON ANIMACIÓN DE ANCHO */}
-      <motion.aside 
-        animate={{ width: isCollapsed ? 80 : 256 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-800/80 flex flex-col justify-between p-4 shrink-0 relative"
-      >
-        {/* BOTÓN FLOTANTE PARA COLAPSAR/EXPANDIR (Fiel a tu imagen original) */}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3.5 top-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-full p-1 shadow-sm z-50 text-slate-400 dark:text-slate-500 transition-colors"
-        >
-          {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
+      {/* Barra lateral clásica */}
+      <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800/80 p-4 flex flex-col justify-between fixed top-0 bottom-0 left-0 z-30 transition-colors shadow-sm">
         
-        {/* PARTE SUPERIOR: LOGO Y NAVEGACIÓN */}
+        {/* Parte Superior (Logo LETS TRIP y menú) */}
         <div className="space-y-6">
-          
-          {/* LOGOTIPO ORIGINAL: LETS TRIP */}
-          <div className="px-2 py-1 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center text-white font-extrabold text-sm tracking-tight shadow-sm shrink-0">
+          <div className="flex items-center gap-2.5 px-1.5 min-h-[44px]">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-sm shrink-0">
               LT
             </div>
-            {!isCollapsed && (
-              <motion.span 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-sm font-black tracking-wider text-slate-800 dark:text-slate-100 uppercase"
-              >
-                LETS TRIP
-              </motion.span>
-            )}
+            <span className="font-extrabold text-sm tracking-tight text-slate-800 dark:text-slate-100 whitespace-nowrap">
+              LETS TRIP
+            </span>
           </div>
 
-          {/* MENÚ DE NAVEGACIÓN */}
+          {/* Menú de Navegación con tus opciones reales */}
           <nav className="space-y-1">
-            <Link 
-              href="/calendario" 
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'calendario' 
-                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-md' 
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-              } ${isCollapsed ? 'justify-center' : ''}`}
-            >
-              <Calendar size={16} className="shrink-0" />
-              {!isCollapsed && <span>Calendario</span>}
-            </Link>
-
-            <Link 
-              href="/colaboradores" 
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'colaboradores' 
-                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-md' 
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-              } ${isCollapsed ? 'justify-center' : ''}`}
-            >
-              <Users size={16} className="shrink-0" />
-              {!isCollapsed && <span>Colaboradores</span>}
-            </Link>
-
-            <Link 
-              href="/registro" 
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'registro' 
-                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-md' 
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-              } ${isCollapsed ? 'justify-center' : ''}`}
-            >
-              <ClipboardList size={16} className="shrink-0" />
-              {!isCollapsed && <span>Registro</span>}
-            </Link>
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive = activeTab === item.id
+              return (
+                <Link 
+                  key={item.id} 
+                  href={item.href}
+                  className={`flex items-center rounded-xl transition-all h-11 px-3.5 gap-3 ${
+                    isActive 
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100 dark:shadow-none' 
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100'
+                  }`}
+                >
+                  <Icon size={18} className="shrink-0" />
+                  <span className="text-xs font-bold whitespace-nowrap">{item.label}</span>
+                </Link>
+              )
+            })}
           </nav>
         </div>
 
-        {/* PARTE INFERIOR: MODO OSCURO Y CERRAR SESIÓN */}
-        <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800/60">
+        {/* Parte Inferior (Controles rápidos) */}
+        <div className="space-y-1.5 pt-4 border-t border-slate-100 dark:border-slate-800/80">
           
-          {/* BOTÓN MODO CLARO / OSCURO (Corregido para producción y adaptado a tu barra) */}
-          <button
-            onClick={toggleTheme}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-slate-200/40 dark:border-slate-800/40 transition-all ${
-              isCollapsed ? 'justify-center' : ''
-            }`}
+          {/* Botón de Modo Claro / Oscuro */}
+          <button 
+            onClick={toggleDarkMode}
+            type="button"
+            className="flex items-center rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 transition-all h-11 px-3.5 gap-3 w-full cursor-pointer"
           >
-            {!mounted ? (
-              <>
-                <Sun size={16} className="text-slate-400 shrink-0" />
-                {!isCollapsed && <span>Cargando Tema</span>}
-              </>
-            ) : darkMode ? (
-              <>
-                <Sun size={16} className="text-amber-500 shrink-0" />
-                {!isCollapsed && <span>Modo Claro</span>}
-              </>
+            {isDarkMode ? (
+              <Sun size={18} className="text-amber-400 shrink-0" />
             ) : (
-              <>
-                <Moon size={16} className="text-indigo-400 shrink-0" />
-                {!isCollapsed && <span>Modo Oscuro</span>}
-              </>
+              <Moon size={18} className="shrink-0" />
             )}
+            <span className="text-xs font-bold whitespace-nowrap">
+              {isDarkMode ? 'Modo Claro' : 'Modo Oscuro'}
+            </span>
           </button>
 
-          {/* BOTÓN CERRAR SESIÓN */}
-          <button
-            onClick={handleCerrarSesion}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all ${
-              isCollapsed ? 'justify-center' : ''
-            }`}
+          {/* Botón Cerrar Sesión */}
+          <button 
+            onClick={handleSignOut}
+            type="button"
+            className="flex items-center rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all h-11 px-3.5 gap-3 w-full cursor-pointer"
           >
-            <LogOut size={16} className="shrink-0" />
-            {!isCollapsed && <span>Cerrar Sesión</span>}
+            <LogOut size={18} className="shrink-0" />
+            <span className="text-xs font-bold whitespace-nowrap">Cerrar Sesión</span>
           </button>
+          
         </div>
-      </motion.aside>
+      </aside>
 
-      {/* CONTENIDO PRINCIPAL DE LA APP */}
-      <main className="flex-1 p-6 overflow-y-auto">
-        {children}
+      {/* Contenedor del contenido principal */}
+      <main className="flex-1 min-h-screen pl-64 p-6 transition-all duration-300">
+        <div className="max-w-[1400px] mx-auto">
+          {children}
+        </div>
       </main>
+
     </div>
   )
 }

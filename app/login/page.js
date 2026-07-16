@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { loginAction } from './actions' // <-- Importamos tu Server Action
+import { loginAction } from './actions' // Importamos la acción de login del servidor
 import { CheckCircle2, AlertCircle, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -8,12 +8,12 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false) // Estado para recordar correo
+  const [rememberMe, setRememberMe] = useState(false)
   const [loading, setLoading] = useState(false)
   const [mensajeExito, setMensajeExito] = useState(null)
   const [mensajeError, setMensajeError] = useState(null)
 
-  // Cargar el correo guardado al montar el componente
+  // Cargar el correo guardado si marcaron "Recordar mi correo"
   useEffect(() => {
     const savedEmail = localStorage.getItem('remembered_email')
     if (savedEmail) {
@@ -27,24 +27,32 @@ export default function LoginPage() {
     setLoading(true)
     setMensajeError(null) 
     
-    // Si "Recordar" está marcado, guardamos el correo; si no, lo eliminamos
     if (rememberMe) {
       localStorage.setItem('remembered_email', email)
     } else {
       localStorage.removeItem('remembered_email')
     }
 
-    // Ejecutamos el login de forma segura en el servidor
-    const resultado = await loginAction(email, password)
-    
-    if (!resultado.success) {
-      setMensajeError(resultado.error)
+    try {
+      const resultado = await loginAction(email, password)
+      
+      if (!resultado || !resultado.success) {
+        setMensajeError(resultado?.error || 'Credenciales inválidas o error de conexión.')
+        setLoading(false)
+      } else {
+        // ACTIVAR BANDERA DE BIENVENIDA ANTES DE REDIRIGIR
+        sessionStorage.setItem('just_logged_in', 'true')
+        
+        setMensajeExito('¡Inicio de sesión exitoso!')
+        setTimeout(() => {
+          // REDIRECCIÓN CORREGIDA: Te manda directo a la página que sí existe
+          window.location.href = '/calendario' 
+        }, 800)
+      }
+    } catch (err) {
+      console.error(err)
+      setMensajeError('Ocurrió un error inesperado al conectar con el servidor.')
       setLoading(false)
-    } else {
-      setMensajeExito('¡Inicio de sesión exitoso!')
-      setTimeout(() => {
-        window.location.href = '/'
-      }, 800)
     }
   }
 
@@ -75,7 +83,7 @@ export default function LoginPage() {
                 <h4 className="text-xs font-bold text-slate-800">Error de Autenticación</h4>
                 <p className="text-[11px] text-slate-400 leading-normal">{mensajeError}</p>
               </div>
-              <button type="button" onClick={() => setMensajeError(null)} className="w-full mt-1 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-600 text-[11px] font-bold rounded-xl transition-colors">Entendido</button>
+              <button type="button" onClick={() => setMensajeError(null)} className="w-full mt-1 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-600 text-[11px] font-bold rounded-xl transition-colors cursor-pointer">Entendido</button>
             </motion.div>
           </div>
         )}
@@ -105,7 +113,7 @@ export default function LoginPage() {
               <input 
                 type="email" 
                 required 
-                value={email} // Vinculamos el valor al estado
+                value={email} 
                 placeholder="ejemplo@empresa.com" 
                 onChange={(e) => setEmail(e.target.value)} 
                 className="w-full pl-10 pr-3.5 py-2.5 border border-slate-200 rounded-xl font-semibold text-xs text-slate-700 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white transition-all bg-slate-50 focus:ring-2 focus:ring-indigo-100" 
@@ -121,6 +129,7 @@ export default function LoginPage() {
               <input 
                 type={showPassword ? 'text' : 'password'} 
                 required 
+                value={password} 
                 placeholder="••••••••" 
                 onChange={(e) => setPassword(e.target.value)} 
                 className="w-full pl-10 pr-11 py-2.5 border border-slate-200 rounded-xl font-semibold text-xs text-slate-700 placeholder-slate-400 outline-none focus:border-indigo-500 focus:bg-white transition-all bg-slate-50 focus:ring-2 focus:ring-indigo-100" 
@@ -135,7 +144,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* CASILLA RECORDAR CORREO */}
+          {/* CASILLA RECORDAR */}
           <div className="flex items-center justify-between pt-1">
             <label className="flex items-center gap-2 cursor-pointer group select-none">
               <input 
@@ -150,13 +159,13 @@ export default function LoginPage() {
             </label>
           </div>
 
-          {/* BOTÓN DE ENVÍO */}
+          {/* BOTÓN DE ENTRAR */}
           <motion.button 
             whileHover={{ scale: 1.01 }} 
             whileTap={{ scale: 0.99 }} 
             type="submit" 
             disabled={loading} 
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-3 px-4 rounded-xl transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed mt-4 shadow-sm shadow-indigo-600/10 flex items-center justify-center tracking-wide"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-3 px-4 rounded-xl transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed mt-4 shadow-sm shadow-indigo-600/10 flex items-center justify-center tracking-wide cursor-pointer"
           >
             {loading ? 'Verificando datos...' : 'Ingresar'}
           </motion.button>
